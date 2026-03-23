@@ -26,7 +26,10 @@ model: claude-haiku-4-5-20251001
 - 명세 섹션: `04-actors`, `05-functional-requirements`, `06-data-model`, `07-api-contract`, `08-edge-cases`, `09-acceptance-criteria`
 
 **3. 마지막 작업 감지:**
-- `logs/argument-log.md` 마지막 줄 파싱 (있으면)
+- `logs/argument-log.md` **마지막 5줄만** 읽기 (파일 전체 로드 금지)
+  ```bash
+  tail -n 5 logs/argument-log.md 2>/dev/null
+  ```
 - 형식: `[datetime] {section}: {field} — {내용}` 추출
 - relative time 계산 (예: "2시간 전", "어제", "3일 전")
 
