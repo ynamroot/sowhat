@@ -54,6 +54,40 @@ description: 외부 리서치를 수행하고 결과를 섹션에 반영한다. 
    /sowhat:research → 자율 리서치 재시작
    ```
 
+6. URL 분석 모드(`$ARGUMENTS`가 URL)인 경우 `logs/session.md` 저장:
+   ```markdown
+   ---
+   command: research
+   section: (url)
+   step: fetching
+   status: in_progress
+   saved: {current_datetime}
+   ---
+
+   ## 마지막 컨텍스트
+   research URL 모드 시작 — {URL} 분석 중.
+
+   ## 재개 시 첫 질문
+   /sowhat:research {URL} → URL 리서치 재시작
+   ```
+
+7. 토픽 검색 모드(`$ARGUMENTS`가 URL 아닌 텍스트)인 경우 `logs/session.md` 저장:
+   ```markdown
+   ---
+   command: research
+   section: (search)
+   step: searching
+   status: in_progress
+   saved: {current_datetime}
+   ---
+
+   ## 마지막 컨텍스트
+   research 토픽 검색 시작 — "{검색어}" 검색 중.
+
+   ## 재개 시 첫 질문
+   /sowhat:research {검색어} → 토픽 검색 재시작
+   ```
+
 ---
 
 ## URL 분석 모드

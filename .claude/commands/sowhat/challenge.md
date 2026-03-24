@@ -295,6 +295,25 @@ date -u +"%Y%m%d-%H%M"
 
 ---
 
+## logs/session.md 업데이트 (완료 시)
+
+```markdown
+---
+command: challenge
+step: complete
+status: complete
+saved: {current_datetime}
+---
+
+## 마지막 컨텍스트
+challenge 완료 — 7단계 검증 종료. 역전파: {있음/없음}. 상세 리포트: logs/challenge-{datetime}.md
+
+## 재개 시 첫 질문
+/sowhat:expand {역전파된 섹션} → 역전파 섹션 재전개
+```
+
+---
+
 ## 완료 안내
 
 모든 공격이 처리되면:

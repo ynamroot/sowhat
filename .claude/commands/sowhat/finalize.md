@@ -199,6 +199,23 @@ git commit -m "finalize: export GSD artifacts"
 gh api repos/{owner}/{repo}/milestones/{milestone_number} -X PATCH -f state=closed 2>/dev/null || true
 ```
 
+## logs/session.md 업데이트
+
+```markdown
+---
+command: finalize
+step: complete
+status: complete
+saved: {current_datetime}
+---
+
+## 마지막 컨텍스트
+finalize 완료 — GSD export 생성됨. export/PROJECT.md + export/REQUIREMENTS.md.
+
+## 재개 시 첫 질문
+/gsd:new-project → export/PROJECT.md와 export/REQUIREMENTS.md로 GSD 프로젝트 시작
+```
+
 ## 완료 안내
 
 ```
