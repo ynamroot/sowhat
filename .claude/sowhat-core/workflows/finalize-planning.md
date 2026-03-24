@@ -47,10 +47,10 @@ date -u +"%Y-%m-%dT%H:%M:%SZ"
 
 ### 05-functional-requirements.md
 - 각 기획 섹션의 Claim을 기능 요구사항으로 변환
-- Supporting Arguments에서 구체적 기능 추출
+- Grounds에서 구체적 기능 추출
 
 ### 06-data-model.md
-- 각 기획 섹션의 Supporting Arguments에서 언급된 데이터/엔티티 추출
+- 각 기획 섹션의 Grounds에서 언급된 데이터/엔티티 추출
 - Edge Cases에서 데이터 관련 제약 추출
 
 ### 07-api-contract.md

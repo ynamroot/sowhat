@@ -109,11 +109,11 @@ GSD `/gsd:new-project`가 소비하는 요구사항 파일.
 # Requirements — {Project Name}
 
 ## Functional Requirements
-{05-functional-requirements.md의 각 Claim/Supporting Argument를 requirement로 변환}
+{05-functional-requirements.md의 각 Claim/Grounds를 requirement로 변환}
 
 ### FR-1: {requirement title}
 - Description: {Claim}
-- Details: {Supporting Arguments 요약}
+- Details: {Grounds 요약}
 - Priority: {있으면}
 
 ### FR-2: {requirement title}

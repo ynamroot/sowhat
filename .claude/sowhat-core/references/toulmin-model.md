@@ -25,6 +25,21 @@ Used in both expand and challenge/debate to express argument strength:
 | 3 | 그럴 수 있다 | possibly | Plausible but significant uncertainty |
 | 4 | 어쩌면 | conceivably | Speculative, weak evidence |
 
+## Scheme (Argument Scheme)
+
+각 섹션은 **반드시** argument scheme을 설정해야 한다. scheme은 논증 유형을 결정하며, 어떤 종류의 근거와 공격이 유효한지를 규정한다.
+
+**유효한 scheme 값**: authority, analogy, cause-effect, statistics, example, sign, principle, consequence
+
+**강제 수준 (모든 워크플로우에서 동일):**
+
+| 워크플로우 | 강제 수준 | 행동 |
+|-----------|----------|------|
+| expand | **필수** | Step 2에서 반드시 선택. 스킵 불가 |
+| settle | **필수** | scheme 미설정 시 settle 거부 |
+| challenge | **major** | scheme 미설정 → ⚠️ major (settle 전 설정 필요) |
+| debate | **참조** | Con-Agent가 scheme CQ 기반으로 공격 |
+
 ## Settled Criteria
 
 A section is eligible for `/sowhat:settle` when ALL of the following are true:
@@ -33,7 +48,21 @@ A section is eligible for `/sowhat:settle` when ALL of the following are true:
 - Warrant: explicit reasoning connecting Grounds → Claim
 - Qualifier: set to a specific level (not blank)
 - Rebuttal: at least 1 condition identified
+- Scheme: set to a valid argument scheme
 - Backing: optional but recommended
+
+## Field Naming Convention
+
+**정식 명칭만 사용한다.** 아래 별칭은 사용하지 않는다:
+
+| 정식 명칭 | 사용 금지 별칭 |
+|----------|--------------|
+| Grounds | Supporting Arguments, 지지 논거, Evidence |
+| Warrant | Logical Connection, 연결 |
+| Backing | Meta-justification |
+| Rebuttal | Counter, Counterargument |
+
+모든 워크플로우, 에이전트, 레퍼런스에서 정식 명칭만 사용한다.
 
 ## MECE Check
 

@@ -137,7 +137,7 @@ status: unreviewed
 
 ## 섹션별 제안
 
-### {섹션} — {대상 영역} (Supporting Arguments / Claim / Edge Cases 등)
+### {섹션} — {대상 영역} (Grounds / Claim / Edge Cases 등)
 > 현재: {현재 내용 인용, 존재하면}
 
 제안: {수정/추가 내용과 이유}
@@ -236,7 +236,7 @@ URL 모드와 동일.
 - `draft` 또는 `discussing` 상태 섹션 — 아직 미완성
 - 모든 섹션의 `## Open Questions` — 미해결 질문
 - MECE 갭 분석 — Key Arguments가 Answer를 완전히 커버하는가
-- Supporting Arguments가 약한 Claim — 근거가 부족한 주장
+- Grounds가 약한 Claim — 근거가 부족한 주장
 
 ### 2. 검색 계획 제시
 

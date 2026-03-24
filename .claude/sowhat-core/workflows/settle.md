@@ -36,7 +36,7 @@
 
 1. **thesis_argument 필드** — 존재하는가?
 2. **Claim ↔ thesis Answer 정합성** — Claim이 thesis Answer를 지지하는가?
-3. **Grounds 존재 여부** — 최소 1개의 근거가 있어야 함 (기획 섹션: Supporting Arguments, 명세 섹션: 해당 필드)
+3. **Grounds 존재 여부** — 최소 1개의 근거가 있어야 함
 4. **Warrant 존재 및 품질** — Warrant가 존재하는가? `"Implicit"` 또는 비어있으면 **경고** (거부는 아니지만 표시)
 5. **Qualifier 설정 여부** — 비어있으면 거부
 6. **Rebuttal 처리 여부** — 반론이 addressed되었거나 Open Question으로 명시되어 있는가?

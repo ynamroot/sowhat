@@ -426,6 +426,78 @@ debate 완료 커밋 직전에 `status: complete`로 업데이트한다.
 - `--until-broken`: outcome이 `broken` 또는 `thesis-threatened` → 즉시 종료
 - 기본값 (`--rounds 3`): 3라운드 후 종료
 
+### Stagnation Detection (정체 감지)
+
+라운드 간 실질적 진전이 없으면 자동으로 종료한다. 토큰 낭비를 방지한다.
+
+**정체 판정 알고리즘:**
+
+```
+AFTER EACH round:
+  progress = calculate_progress(current_round, previous_rounds)
+
+  IF progress == "stagnant":
+    자동 종료 + 정체 보고
+```
+
+**calculate_progress 기준:**
+
+```
+stagnant 조건 (하나라도 해당되면 정체):
+
+1. 동일 공격 반복:
+   - Con-Agent의 공격 유형이 이전 라운드와 동일
+   - AND 공격 대상 필드(Grounds/Warrant/Qualifier)도 동일
+   - → stagnant (Con이 새 약점을 찾지 못함)
+
+2. 동일 방어 반복:
+   - Pro-Agent의 방어 방식이 이전 라운드와 동일
+   - AND 새로운 Grounds/Warrant/Backing 추가 없음
+   - → stagnant (Pro가 새 근거를 제시하지 못함)
+
+3. Qualifier 진동:
+   - 최근 3라운드에서 Qualifier가 A→B→A로 진동
+   - → stagnant (합의 불가능)
+
+4. 연속 무변화:
+   - 3라운드 연속 outcome이 동일 (예: modified × 3)
+   - AND 섹션 파일의 실제 변경사항이 없음
+   - → stagnant (형식적 라운드만 반복)
+```
+
+**정체 시 출력:**
+
+```
+⚠️  Debate 정체 감지 — 자동 종료
+
+  라운드: {N}
+  정체 유형: {동일 공격 반복 | 동일 방어 반복 | Qualifier 진동 | 연속 무변화}
+  마지막 유의미한 변화: Round {M}
+
+  [1] 추가 라운드 강제 진행 (최대 2라운드 더)
+  [2] 종료 수용 — Post-Debate 요약으로 이동
+  [3] 다른 섹션으로 debate 전환
+```
+
+**강제 진행 시:**
+- 최대 2라운드까지만 허용
+- Con-Agent에 `<force_new_angle>true</force_new_angle>` 전달 → 이전과 다른 공격 차원 강제
+- 2라운드 후에도 정체면 무조건 종료
+
+### 라운드 간 진전 추적
+
+각 라운드 결과를 구조화하여 다음 라운드에 전달한다:
+
+```
+round_history = [
+  { round: 1, attack_type: "Warrant", target_field: "Warrant", outcome: "modified", changes: ["Qualifier: definitely→usually"] },
+  { round: 2, attack_type: "Warrant", target_field: "Warrant", outcome: "modified", changes: [] },
+  { round: 3, ... }
+]
+```
+
+이 히스토리를 기반으로 stagnation detection이 작동한다.
+
 ## --global 모드
 
 전체 트리를 debate한다. 순서:
