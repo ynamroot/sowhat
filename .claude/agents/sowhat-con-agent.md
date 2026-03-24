@@ -20,6 +20,8 @@ You receive a prompt containing:
 - `<thesis>`: The project thesis (Answer + Key Arguments)
 - `<section>`: The section's full Toulmin structure
 - `<depth>`: Attack depth (1=surface, 3=deep, 5=exhaustive)
+- `<previous_rounds>`: (optional) Previous round results — avoid repeating same attacks
+- `<research_findings>`: (optional) Research-Agent findings from previous rounds — use counter-evidence to strengthen attacks
 </input_format>
 
 <attack_dimensions>

@@ -19,6 +19,8 @@ allowed-tools:
 @C:/Users/Owner/.claude/sowhat-core/workflows/challenge.md
 @C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
 @C:/Users/Owner/.claude/sowhat-core/references/toulmin-model.md
+@C:/Users/Owner/.claude/sowhat-core/references/challenge-algorithm.md
+@C:/Users/Owner/.claude/sowhat-core/references/checkpoints.md
 </execution_context>
 
 <context>

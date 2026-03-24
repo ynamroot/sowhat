@@ -199,6 +199,74 @@ debate 브랜치가 있으면:
 
 ---
 
+## session.md 없이 상태 재구성 (Fallback Recovery)
+
+session.md가 유실되었을 때 파일 상태 + git log로 최대한 복구한다.
+
+### 복구 알고리즘
+
+```
+1. config.json에서 전체 섹션 목록 + status 로드
+2. 각 섹션 파일의 frontmatter에서 실제 status 확인 (config.json과 불일치 감지)
+3. git log --oneline -30 에서 패턴 매칭:
+
+   커밋 패턴 → 추론 결과:
+   - "wip({section}): add {field}" → expand 진행 중, {field} 단계
+   - "expand({section}): complete" → expand 완료, settle 대기
+   - "debate({section}): round-{N}" → debate round {N} 완료
+   - "debate({section}): merge" → debate 완료, merge됨
+   - "settle({section})" → settle 완료
+   - "challenge: invalidate" → challenge 후 역전파 실행됨
+   - "challenge: stage-{N}" → challenge 부분 완료 (partial 파일 확인)
+
+4. 섹션 파일 필드 점검:
+   - Claim 있고 Grounds 없음 → expand Step 3 완료, Step 4 대기
+   - Claim + Grounds + Warrant 없음 → expand Step 4 완료, Step 5 대기
+   - 모든 Toulmin 필드 있고 status=discussing → settle 대기
+
+5. challenge partial 결과 확인:
+   - logs/challenge-*-partial.md 존재 → challenge 중단, 부분 결과 있음
+   - 어느 stage까지 완료되었는지 파일 내용으로 확인
+
+6. debate 브랜치 상태:
+   - debate/{section}-* 브랜치 존재 → 미merge debate
+   - 해당 브랜치의 logs/debate/{section}-round-*.md 파일 수 → 진행 라운드 수
+```
+
+### 복구 출력
+
+```
+⚠️  session.md 유실 — 파일 상태로 복구됨
+
+  추론 근거:
+  - git log: {마지막 관련 커밋 메시지}
+  - 섹션 파일: {어떤 필드까지 채워져 있는지}
+  - debate 브랜치: {있으면 표시}
+
+  추론 결과:
+  - 마지막 작업: {command} on {section}, {step} 단계
+  - 신뢰도: {높음|보통|낮음}
+
+  {신뢰도가 "낮음"이면}
+  ⚠️  추론이 불확실합니다. 섹션 상태를 직접 확인해주세요.
+```
+
+### 불일치 감지 및 자동 수정
+
+config.json status와 섹션 파일 status가 다른 경우:
+
+```
+⚠️  상태 불일치 감지
+
+  {section}: config.json={status_a}, 파일={status_b}
+
+  [1] 파일 기준으로 config 수정 (권장 — 파일이 더 정확)
+  [2] config 기준으로 파일 수정
+  [3] 무시
+```
+
+---
+
 ## 핵심 원칙
 
 - **session.md가 있으면 무조건 우선** — 가장 정확한 컨텍스트

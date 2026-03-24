@@ -129,30 +129,77 @@ git checkout -b "$BRANCH"
   3. 위 조건 미해당 시에만 방어 순서(Grounds → Warrant → Qualifier → Scope) 진행, 전체 소진 시 양보
 
 ### Research-Agent (claude-sonnet-4-6)
-- 역할: Pro-Agent 또는 Con-Agent가 외부 근거를 요청할 때만 활성화
+- 역할: 외부 근거 수집. **요청 시 + 자동 트리거 조건 충족 시** 활성화
 - 도구: WebSearch, WebFetch
 - 출력: Grounds 또는 Backing에 삽입 가능한 형식으로 정리
-- 한도: 라운드당 최대 2회 검색
+- 한도: 라운드당 최대 3회 검색
 
-## 에이전트 스폰 (병렬 실행)
+#### 자동 트리거 조건 (요청 없어도 활성화)
 
-세 에이전트를 동시에 스폰한다:
+다음 조건 중 하나라도 해당되면 Research-Agent를 자동으로 활성화한다:
 
-**Con 에이전트** (sowhat-con-agent):
-- 입력: thesis, 섹션 전체 내용, depth={depth}
-- 역할: 논증 공격
+| 조건 | 트리거 | 리서치 방향 |
+|------|--------|------------|
+| Con이 "근거 불충분" 공격 | ✅ 자동 | Claim을 지지하는 추가 증거 탐색 |
+| Con이 "데이터 오래됨" 공격 | ✅ 자동 | 최신 데이터/통계 탐색 |
+| Pro가 Backing 없이 Warrant 방어 | ✅ 자동 | Warrant를 지지하는 외부 근거 탐색 |
+| Qualifier 분쟁 (Con: overclaiming) | ✅ 자동 | 정량적 데이터로 적정 수준 탐색 |
+| Con이 Steelman 공격 (독립 반론) | ✅ 자동 | 반론을 지지/반박하는 양쪽 증거 탐색 |
+| 단순 논리 구조 공격 (Non-sequitur 등) | ❌ 불필요 | 리서치로 해결 불가 |
 
-**Pro 에이전트** (sowhat-pro-agent):
-- 입력: thesis, 섹션 전체 내용
-- 역할: 논증 방어 준비 (Con 결과 불포함 — 독립 시작)
+#### 리서치 결과 주입
 
-**Research 에이전트** (sowhat-research-agent):
-- 입력: thesis, 섹션 내용, Open Questions
-- 역할: 외부 근거 수집
+Research-Agent 결과는 다음 라운드의 Con/Pro 양쪽에 동시 전달한다:
+- **Pro에게**: 방어에 사용할 수 있는 지지 근거
+- **Con에게**: 공격을 강화할 수 있는 반박 근거
+- 중립적 입장 — 어느 쪽에도 편향하지 않음
 
-세 에이전트를 Task 도구로 병렬 스폰한다. 모두 완료되면 결과를 종합한다.
+## 에이전트 스폰 (2단계 실행)
 
-Pro 에이전트에게 Con 공격 결과를 전달하여 최종 방어 응답을 생성한다 (2단계).
+### Phase 1: Con + Research 병렬 스폰
+
+```
+# Con과 Research를 동시에 스폰
+con_result = Task(sowhat-con-agent,
+  prompt = """
+  <thesis>{thesis}</thesis>
+  <section>{섹션 전체 내용}</section>
+  <depth>{depth}</depth>
+  <previous_rounds>{이전 라운드 결과 요약 (있으면)}</previous_rounds>
+  <research_findings>{이전 라운드 리서치 결과 (있으면)}</research_findings>
+  """)
+
+research_result = Task(sowhat-research-agent,
+  prompt = """
+  <thesis>{thesis}</thesis>
+  <section>{섹션 내용}</section>
+  <search_focus>{현재 섹션의 가장 약한 Grounds + Open Questions}</search_focus>
+  <previous_findings>{이전 라운드에서 이미 찾은 것 — 중복 검색 방지}</previous_findings>
+  """)
+
+# 두 에이전트 완료 대기
+```
+
+> **자동 트리거 판단**: 위 "자동 트리거 조건"에 해당하지 않으면 Research-Agent 스폰을 건너뛴다. 단, Round 1에서는 항상 스폰한다 (초기 근거 수집).
+
+### Phase 2: Pro 스폰 (Con + Research 결과 포함)
+
+```
+pro_result = Task(sowhat-pro-agent,
+  prompt = """
+  <thesis>{thesis}</thesis>
+  <section>{섹션 전체 내용}</section>
+  <con_attacks>{con_result}</con_attacks>
+  <research_findings>{research_result — 지지 근거만 필터링}</research_findings>
+  """)
+```
+
+Pro에게는 Research 결과 중 **지지 근거만** 전달한다. 반박 근거는 Con의 다음 라운드에 전달.
+
+### Phase 3: 오케스트레이터 종합
+
+Con 공격 + Pro 방어 + Research 근거를 종합하여 판정한다.
+Research가 찾은 반박 근거가 Pro의 방어를 약화시키면 판정에 반영한다.
 
 ## 라운드 구조
 
@@ -226,9 +273,25 @@ Pro-Agent 또는 Con-Agent가 다음 표현을 사용할 때만 활성화:
   삽입 위치: Grounds 항목 {N} 또는 Backing
 ```
 
-### Step 4: 오케스트레이터 판정
+### Step 4: 오케스트레이터 판정 + verify-argument Checkpoint
 
 Pro-Agent의 방어가 공격의 논리적 취약점을 **직접 해소했는가**를 기준으로 판정한다.
+
+판정 후 인간에게 `verify-argument` checkpoint를 제시한다 (`references/checkpoints.md` 참조):
+
+```
+┌─── verify-argument (round {N}) ───────────────┐
+│ Con 공격: {공격 요약 한 줄}                    │
+│ Pro 방어: {방어 요약 한 줄}                    │
+│ 판정: {outcome} — {이유 한 줄}                 │
+│                                                │
+│ [A] 승인 — 판정 적용                           │
+│ [O] 판정 변경 — {다른 outcome 선택}            │
+│ [S] 중단 — debate 보류                         │
+└────────────────────────────────────────────────┘
+```
+
+인간이 `[O]`를 선택하면 인간의 판정을 우선한다 (이유 기록 필수).
 
 | 결과 | 판정 기준 | 섹션 status 변경 |
 |------|-----------|------------------|
@@ -500,6 +563,54 @@ outcome에 따라 다음 안내를 표시한다:
   다음: /sowhat:expand {section} → /sowhat:init (thesis 수정)
 ```
 
+## Debate 브랜치 Lifecycle
+
+### 생성
+- debate 시작 시 `debate/{section}-{YYYYMMDD-HHMM}` 브랜치 생성
+- 작업 트리가 깨끗해야 함 (uncommitted 변경 거부)
+
+### 라운드 중
+- 각 라운드 결과를 브랜치에 커밋
+- `logs/debate/{section}-round-{N}.md` 파일 생성
+- 섹션 파일 직접 수정 (Grounds, Warrant, Qualifier 등)
+
+### 종료 시 인간 결정 (decision checkpoint)
+- `[1] merge` → main에 merge, 섹션 status를 discussing으로 복원
+- `[2] cherry-pick` → 특정 라운드만 선택적 적용
+- `[3] 보류` → 브랜치 유지, 나중에 결정
+- `[4] 삭제` → 브랜치 삭제, 변경사항 폐기
+
+### 고아 브랜치 정리
+
+`/sowhat:resume` 또는 `/sowhat:progress` 실행 시 고아 브랜치를 감지한다:
+
+```
+고아 브랜치 판정 기준:
+- debate/ 브랜치가 존재
+- 해당 브랜치의 마지막 커밋이 7일 이상 경과
+- main에 merge되지 않음
+
+감지 시 출력:
+⚠️  오래된 debate 브랜치 발견
+  {branch_name} — 마지막 커밋: {date} ({N}일 전)
+
+  [M] main으로 merge
+  [D] 브랜치 삭제
+  [K] 유지 (다음 세션에서 다시 확인)
+```
+
+### 동시 debate 방지
+
+같은 섹션에 대한 debate 브랜치가 이미 존재하면:
+```
+❌ 이미 진행 중인 debate가 있습니다: {existing_branch}
+  [1] 기존 debate 이어서 진행
+  [2] 기존 debate 삭제 후 새로 시작
+  [3] 취소
+```
+
+---
+
 ## 핵심 원칙
 
 - **Warrant 취약점 우선** — Con-Agent는 항상 Warrant Non-sequitur/Missing link/Circular 먼저 점검
@@ -508,7 +619,7 @@ outcome에 따라 다음 안내를 표시한다:
 - **우회 방어는 weakened** — 공격 지점을 직접 해소하지 않은 방어는 성공이 아님
 - **Pro-Agent 단순 재주장 금지** — Claim 반복은 방어가 아님
 - **Claim이 무너져야 한다면 무너뜨린다** — 방어를 위한 방어 없음
-- **Research-Agent는 요청 시만 활성화** — 자동으로 검색하지 않는다
+- **Research-Agent는 자동 트리거 + 요청 시 활성화** — 근거 불충분/데이터 오래됨/Qualifier 분쟁 시 자동 발동
 - **브랜치는 인간이 결정한다** — 자동 merge 없음
 - **Thesis 위기는 즉시 PAUSE** — 임의로 처리하지 않는다
 - **에스컬레이션은 단계적** — Claim → Key Argument → Thesis 순서 준수

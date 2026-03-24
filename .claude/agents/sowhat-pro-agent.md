@@ -20,6 +20,7 @@ You receive a prompt containing:
 - `<thesis>`: The project thesis
 - `<section>`: The section's full Toulmin structure
 - `<con_attacks>`: Con agent's attack results
+- `<research_findings>`: (optional) Research-Agent findings — supporting evidence to strengthen defense
 </input_format>
 
 <defense_approach>

@@ -40,6 +40,32 @@
 각 스테이지는 sowhat-challenge-agent를 Task로 스폰하여 실행한다.
 스테이지 1-7을 순차적으로 실행한다 (각 스테이지 결과가 다음 스테이지 컨텍스트에 영향을 미치므로 순차 실행).
 
+> **판정 알고리즘**: 각 스테이지의 pass/fail 기준, severity 분류, 구체적 판정 로직은 `references/challenge-algorithm.md`에 정의되어 있다. agent 스폰 시 해당 스테이지의 algorithm 섹션을 함께 전달한다.
+
+### 에이전트 스폰 패턴
+
+```
+FOR stage IN [1, 2, 3, 4, 5, 6, 7]:
+  result_{stage} = Task(sowhat-challenge-agent,
+    prompt = """
+    <stage>{stage}: {stage_name}</stage>
+    <algorithm>{challenge-algorithm.md의 해당 Stage 섹션 전문}</algorithm>
+    <thesis>{thesis_answer, key_arguments}</thesis>
+    <sections>{모든 섹션 데이터 (메모리 변수)}</sections>
+    """)
+
+  # 중간 실패 처리: critical 이슈 발견 시에도 나머지 스테이지 계속 실행
+  # (모든 문제를 한 번에 수집하여 보고)
+  accumulated_issues += result_{stage}.issues
+```
+
+### 부분 결과 보존
+
+스테이지 실행 중 context reset이나 에러 발생 시:
+- 완료된 스테이지 결과는 `logs/challenge-{datetime}-partial.md`에 즉시 저장
+- 재개 시 완료된 스테이지는 건너뛰고 미완료 스테이지부터 계속
+- session.md에 `step: stage-{N}` 으로 진행 상황 추적
+
 ## 검증 순서 (고정 — 순서 변경 불가)
 
 ### [1단계] Thesis 정합성
@@ -165,6 +191,35 @@ scheme 미설정이거나 scheme의 Critical Questions에 취약점이 발견되
 `research/` 내 `status: accepted` 파인딩이 있으면, 발견된 갭과 교차검증:
 - 리서치 파인딩이 동일한 갭을 식별했으면 함께 보고: `리서치 #{NNN}에서도 이 갭을 확인함: {요약}`
 - 관련 없으면 건너뜀
+
+### [참고] 근거 검증 리서치 (Sub-Agent 활용)
+
+Stage 4 (So What) 또는 Stage 5 (Why So)에서 Grounds가 **주장만 있고 외부 증거가 없는** 섹션을 발견하면, Research-Agent를 스폰하여 근거를 검증한다.
+
+#### 트리거 조건
+
+```
+FOR EACH section WITH issue in Stage 4 or Stage 5:
+  IF grounds_contain_only_assertions(section):
+    # Grounds가 "~이다", "~것으로 보인다" 등 주장만 포함하고
+    # URL, 수치, 출처 인용이 없으면 → 리서치 트리거
+    research_result = Task(sowhat-research-agent,
+      prompt = """
+      <section>{section}</section>
+      <search_focus>
+        다음 주장의 외부 증거를 탐색:
+        {assertion_list}
+      </search_focus>
+      """)
+```
+
+#### 결과 반영
+
+- 지지 증거 발견 → severity 유지 또는 하향 (major → minor)
+- 반증 발견 → severity 상향 (major → critical) + 반증 내용을 리포트에 포함
+- 증거 없음 → severity 유지, "외부 증거 미발견" 기록
+
+> **원칙**: 리서치는 공격을 강화하기 위한 것이지 방어하기 위한 것이 아니다. 반증이 발견되면 반드시 보고한다.
 
 ---
 
