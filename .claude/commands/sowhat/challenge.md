@@ -16,9 +16,9 @@ allowed-tools:
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat/workflows/challenge.md
-@C:/Users/Owner/.claude/sowhat/references/session-protocol.md
-@C:/Users/Owner/.claude/sowhat/references/toulmin-model.md
+@C:/Users/Owner/.claude/sowhat-core/workflows/challenge.md
+@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
+@C:/Users/Owner/.claude/sowhat-core/references/toulmin-model.md
 </execution_context>
 
 <context>

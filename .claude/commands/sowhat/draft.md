@@ -14,9 +14,9 @@ settled 섹션들의 논증 구조를 종합하여 지정한 형식(PRD/proposal
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat/workflows/draft.md
-@C:/Users/Owner/.claude/sowhat/references/session-protocol.md
-@C:/Users/Owner/.claude/sowhat/references/toulmin-model.md
+@C:/Users/Owner/.claude/sowhat-core/workflows/draft.md
+@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
+@C:/Users/Owner/.claude/sowhat-core/references/toulmin-model.md
 </execution_context>
 
 <context>

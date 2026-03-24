@@ -13,9 +13,9 @@ sowhat 프로젝트를 초기화한다. IBIS Issue 프레이밍과 SCQ 핑퐁으
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat/workflows/init.md
-@C:/Users/Owner/.claude/sowhat/references/session-protocol.md
-@C:/Users/Owner/.claude/sowhat/references/toulmin-model.md
+@C:/Users/Owner/.claude/sowhat-core/workflows/init.md
+@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
+@C:/Users/Owner/.claude/sowhat-core/references/toulmin-model.md
 </execution_context>
 
 <context>

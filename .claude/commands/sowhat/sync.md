@@ -15,8 +15,8 @@ GitHub Issues의 label/status 변경을 감지하고 로컬 섹션 파일에 반
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat/workflows/sync.md
-@C:/Users/Owner/.claude/sowhat/references/session-protocol.md
+@C:/Users/Owner/.claude/sowhat-core/workflows/sync.md
+@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
 </execution_context>
 
 <context>
