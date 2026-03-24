@@ -13,8 +13,8 @@ logs/session.md, git log, 섹션 상태, debate 브랜치를 분석하여 중단
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat-core/workflows/resume.md
-@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
+@.claude/sowhat-core/workflows/resume.md
+@.claude/sowhat-core/references/session-protocol.md
 </execution_context>
 
 <context>

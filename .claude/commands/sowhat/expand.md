@@ -16,9 +16,9 @@ allowed-tools:
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat-core/workflows/expand.md
-@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
-@C:/Users/Owner/.claude/sowhat-core/references/toulmin-model.md
+@.claude/sowhat-core/workflows/expand.md
+@.claude/sowhat-core/references/session-protocol.md
+@.claude/sowhat-core/references/toulmin-model.md
 </execution_context>
 
 <context>

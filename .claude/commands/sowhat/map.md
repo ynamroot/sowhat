@@ -13,8 +13,8 @@ config.json과 모든 섹션 파일을 읽어 논증 트리의 Mermaid 다이어
 </objective>
 
 <execution_context>
-@C:/Users/Owner/.claude/sowhat-core/workflows/map.md
-@C:/Users/Owner/.claude/sowhat-core/references/session-protocol.md
+@.claude/sowhat-core/workflows/map.md
+@.claude/sowhat-core/references/session-protocol.md
 </execution_context>
 
 <context>
