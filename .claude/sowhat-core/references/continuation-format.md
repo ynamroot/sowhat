@@ -92,6 +92,27 @@ Standard format for presenting next steps after any sowhat command completes.
 ---
 ```
 
+### After inject:
+```
+---
+
+## ▶ 다음
+
+**{section}: {section name}** — 주입 반영 후 논증 강화
+
+`/sowhat:expand {section}` 또는 `/sowhat:settle {section}`
+
+<sub>`/clear` 후 실행</sub>
+
+---
+
+**또한 가능:**
+- `/sowhat:challenge {section}` — 주입 후 부분 검증
+- `/sowhat:debate {section}` — 변증법 강화
+
+---
+```
+
 ### After challenge (no issues):
 ```
 ---

@@ -161,9 +161,10 @@ settle 완료 — {N}-{section} settled 전환. Claim: {claim 한 줄}
 /sowhat:expand {next} → 다음 섹션 전개
 ```
 
-### 8. 완료 안내 + 논증 구조 요약
+### 8. 완료 안내 + 논증 구조 요약 + 강도 점수
 
-완료 메시지와 함께 논증 구조를 **인라인으로 즉시 출력**한다.
+완료 메시지와 함께 논증 구조 및 강도 점수를 **인라인으로 즉시 출력**한다.
+강도 점수는 `references/strength-scoring.md`의 알고리즘으로 계산한다.
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -187,6 +188,13 @@ settle 완료 — {N}-{section} settled 전환. Claim: {claim 한 줄}
 
   ⚡ Rebuttal
     {Rebuttal | 없음}
+
+📊 논증 강도: {section_score}/100 [{등급}]
+  근거     [{evidence_bar}] {evidence_score}/35
+  논리     [{logic_bar}]    {logic_score}/30
+  방어     [{defense_bar}]  {defense_score}/20
+  보정     [{calibration_bar}] {calibration_score}/15
+  {60 미만이면: ⚠️ 논증 강도가 낮습니다. /sowhat:debate {section}으로 강화를 권장합니다.}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  컨텍스트 관리 권장

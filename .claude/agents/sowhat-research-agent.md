@@ -38,10 +38,12 @@ You receive a prompt containing:
    - **반박 근거**: What challenges the section's Grounds/Claim?
    - Both are equally valuable — do NOT filter based on which side you prefer
 
-5. Assess evidence quality:
-   - Primary source (연구, 공식 통계) > Secondary (기사, 블로그)
+5. Assess source credibility using `references/source-credibility.md`:
+   - Classify each source into Tier (T1/T2/T3/T4)
+   - T1 (학술/정부) > T2 (산업/언론) > T3 (전문 블로그) > T4 (개인/커뮤니티)
    - Recent (< 2 years) > Older
    - Quantitative > Qualitative
+   - T4 sources: flag as "Backing only" in output
 
 6. Check for `<previous_findings>` to avoid duplicate searches
 </research_process>
@@ -56,11 +58,11 @@ Return structured research results:
 **검색어**: {queries used}
 
 ### 지지 근거
-- [R1] {발견 내용} — 출처: {URL or source}
-- [R2] {발견 내용} — 출처: {URL or source}
+- [R1] {발견 내용} — 출처: {URL or source} | 📊 {Tier} ({tier_reason})
+- [R2] {발견 내용} — 출처: {URL or source} | 📊 {Tier} ({tier_reason})
 
 ### 반박 근거
-- [R3] {발견 내용} — 출처: {URL or source}
+- [R3] {발견 내용} — 출처: {URL or source} | 📊 {Tier} ({tier_reason})
 
 ### Open Questions 해소
 - {질문}: {발견한 답변 또는 "추가 조사 필요"}

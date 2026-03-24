@@ -91,6 +91,13 @@ draft 시작 — 사전 검증 완료. 형식 선택 대기 중.
   [4] 연구/학술 기획서 — 문헌 기반, 방법론 중심
   [5] 내부 결정 문서 — 의사결정 배경 + 옵션 비교 + 결론
 
+──── 디지털 콘텐츠 ────
+  [7] 블로그 포스트 — SEO 친화적, 소제목+본문 구조
+  [8] 프레젠테이션 슬라이드 — Mermaid/Reveal.js 기반, 슬라이드별 핵심 메시지
+  [9] 소셜 미디어 스레드 — Twitter/X 스레드, 280자 단위 분할
+  [10] 영상 스크립트 — 내레이션 + 시각자료 큐 포함
+  [11] 뉴스레터 — 이메일 발송용, 도입-핵심-CTA 구조
+
 ──── 기타 ────
   [6] 직접 포맷 지정
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -122,10 +129,15 @@ draft 시작 — 사전 검증 완료. 형식 선택 대기 중.
 ## Step 3: 출력 대상 결정
 
 `--output` 인수 파싱:
-- `all` (기본값, 인수 없을 때): DOCUMENT.md + PRD.md + ARGUMENT-MAP.md
+- `all` (기본값, 인수 없을 때): DOCUMENT.md + PRD.md + ARGUMENT-MAP.md (기존 3종)
 - `document`: DOCUMENT.md만
 - `prd`: PRD.md만
 - `argument-map`: ARGUMENT-MAP.md만
+- `blog`: DOCUMENT.md를 블로그 포스트 형식으로
+- `slides`: DOCUMENT.md를 프레젠테이션 슬라이드 형식으로
+- `social`: DOCUMENT.md를 소셜 미디어 스레드 형식으로
+- `script`: DOCUMENT.md를 영상 스크립트 형식으로
+- `newsletter`: DOCUMENT.md를 뉴스레터 형식으로
 - 쉼표 구분으로 복수 지정 가능: `--output document,prd`
 
 planning 레이어에서 [1] 선택 시: PRD.md 출력 제외 (자동 적용, 사용자에게 알림)
@@ -222,6 +234,133 @@ mkdir -p export
 ## 반론 및 대응
 ## 후속 조치
 ## 미결 사항
+```
+
+[7] 블로그 포스트:
+```
+# {SEO 친화적 제목}
+
+> {Answer를 활용한 도입 훅 — 독자의 관심을 잡는 1-2문장}
+
+## {Key Argument 1을 소제목으로}
+{Grounds 기반 본문 — 구체적 데이터와 사례}
+
+## {Key Argument 2를 소제목으로}
+{Grounds 기반 본문}
+
+## {Key Argument 3를 소제목으로}
+{Grounds 기반 본문}
+
+## 결론
+{Answer 재강조 + Call-to-Action}
+
+---
+*참고자료: {research findings 기반 인라인 링크}*
+```
+
+[8] 프레젠테이션 슬라이드:
+```
+<!-- Slide 1: Title -->
+# {제목}
+{Situation 한 줄}
+
+<!-- Slide 2: Problem -->
+## 문제
+{Complication — 3개 불릿}
+
+<!-- Slide 3-N: Arguments -->
+## {Key Argument N}
+- {Claim}
+- {핵심 Ground 1-2개}
+- {시각자료 제안: 차트/그래프/다이어그램}
+
+<!-- Slide N+1: Counter & Response -->
+## "하지만..." → "그럼에도"
+{Rebuttal 요약 → 대응}
+
+<!-- Slide N+2: Conclusion -->
+## 결론
+{Answer — 행동 촉구}
+```
+
+[9] 소셜 미디어 스레드:
+```
+🧵 1/N
+{Answer를 흥미롭게 재구성 — 280자 이내}
+
+2/N
+배경: {Situation + Complication 압축}
+
+3/N ~ (N-2)/N
+{각 Key Argument를 1트윗으로:}
+💡 {Claim}
+📊 {가장 강한 Ground 1개}
+
+(N-1)/N
+⚠️ 반론: {가장 강한 Rebuttal}
+→ 하지만: {대응}
+
+N/N
+결론: {Answer 재강조}
+{관련 해시태그 3-5개}
+```
+
+[10] 영상 스크립트:
+```
+## 영상 스크립트: {제목}
+예상 길이: {N}분
+
+### 도입 (0:00-0:30)
+[화면] {시각자료 설명}
+[내레이션] "{Situation을 활용한 오프닝 훅}"
+
+### 본론 1: {Key Argument 1} (0:30-{N}:00)
+[화면] {데이터 시각화 / B-roll 제안}
+[내레이션] "{Claim}. {Grounds 기반 설명}."
+[자막] {핵심 수치/인용}
+
+### 본론 2-3: (반복)
+
+### 반론 대응 ({N}:00-{N+1}:00)
+[화면] {반론 시각화}
+[내레이션] "물론 {Rebuttal}이라는 의견도 있습니다. 하지만..."
+
+### 마무리
+[내레이션] "{Answer 재강조}. {Call-to-Action}."
+[화면] {구독/좋아요 CTA}
+```
+
+[11] 뉴스레터:
+```
+**Subject Line**: {Answer를 활용한 제목}
+**Preview Text**: {Situation 한 줄 요약}
+
+---
+
+안녕하세요, {독자 호칭}
+
+{Situation + Complication — 2-3문장으로 공감대 형성}
+
+**핵심 인사이트:**
+
+1️⃣ **{Key Argument 1}**
+{Grounds 기반 1-2문장}
+
+2️⃣ **{Key Argument 2}**
+{Grounds 기반 1-2문장}
+
+3️⃣ **{Key Argument 3}**
+{Grounds 기반 1-2문장}
+
+**한 가지 더:**
+{Rebuttal 대응 — "~라는 우려도 있지만, ~입니다."}
+
+**결론**: {Answer}
+
+{Call-to-Action 버튼/링크}
+
+---
+*이 뉴스레터가 유용했다면 동료에게 공유해주세요.*
 ```
 
 파일 상단에 메타데이터 주석 추가:

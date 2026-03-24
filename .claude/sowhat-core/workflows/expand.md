@@ -95,7 +95,36 @@
 ### 스텝 0: 기존 섹션 상태 파악 (needs-revision일 때)
 
 `needs-revision` 상태면: 어떤 필드가 문제였는지 확인하고 해당 필드부터 재개.
-`draft` 또는 신규 섹션이면 스텝 1로.
+`draft` 또는 신규 섹션이면 스텝 0.5로.
+
+---
+
+### 스텝 0.5: Thesis Drift 감지
+
+expand 시작 시 기존 논증과 thesis Answer 간 drift를 검사한다:
+
+1. 현재 섹션의 Claim (있으면)과 thesis Answer의 semantic distance 측정:
+   - Claim의 키워드가 Answer에 포함되는가?
+   - Claim이 Answer를 지지하는 방향인가?
+
+2. 모든 settled 섹션의 Claim 합산이 Answer를 완전히 커버하는지 확인:
+   - 커버되지 않는 영역이 있으면 → 경고
+
+3. drift 감지 시:
+   ```
+   ⚠️ Thesis Drift 감지
+
+   현재 논증 방향이 Thesis와 멀어지고 있습니다.
+
+   Thesis Answer: "{answer}"
+   이 섹션의 방향: "{claim 또는 thesis_argument}"
+
+   [1] 계속 진행 (drift 무시)
+   [2] Thesis 수정 필요 (/sowhat:revise thesis)
+   [3] 이 섹션의 방향 조정
+   ```
+
+drift가 감지되지 않으면 조용히 통과하고 스텝 1로 진행한다.
 
 ---
 

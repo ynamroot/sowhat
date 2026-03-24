@@ -44,6 +44,12 @@ THEN (전체 검증):
      - 빠진 논거 있음 → ⚠️ major: 커버리지 갭 (누락된 Key Argument 명시)
   5. IBIS Position 명확성: 각 섹션이 어떤 Issue에 대한 Position인지 추론 가능한가?
      - 불명확 → 💡 minor: Position 명시화 권고
+
+  6. Drift Score 계산:
+     FOR EACH section:
+       drift = semantic_distance(section.Claim, thesis.Answer)
+       IF drift > threshold:
+         ⚠️ major: Thesis drift 감지 — 섹션이 Answer에서 멀어지고 있음
 ```
 
 ### Pass 기준
@@ -207,22 +213,33 @@ FOR EACH section:
 
 **질문**: 근거가 충분하고, 각 근거가 필요한가?
 
+> **출처 신뢰도 연동**: 이 스테이지는 `references/source-credibility.md`의 Tier 가중치를 사용한다.
+
 ### 알고리즘
 
 ```
 FOR EACH section:
+  0. 출처 신뢰도 검사 (source-credibility.md 참조):
+     FOR EACH ground:
+       - 출처 URL/인용이 있는가?
+         - 없음 → ⚠️ major: 출처 미명시 (strength × 0.5)
+       - 출처의 Tier 판정:
+         - T4가 Grounds에 단독 사용됨 → 🔴 critical: T4 출처 Grounds 위반
+         - T3가 단독 사용 + Qualifier ≤ 2 (in most cases) → ⚠️ major: 교차검증 필요
+
   1. 충분성 테스트:
      Qualifier별 최소 근거 기준:
-     | Qualifier | 최소 근거 수 | 최소 근거 유형 |
-     |-----------|-------------|---------------|
-     | definitely (0) | 3+ | 최소 1개 정량적 데이터 필수 |
-     | usually (1) | 2+ | 정량 또는 복수 사례 |
-     | in most cases (2) | 2+ | 유형 무관 |
-     | presumably (3) | 1+ | 유형 무관 |
-     | possibly (4) | 1+ | 유형 무관 |
+     | Qualifier | 최소 근거 수 | 최소 근거 유형 | 최소 Tier |
+     |-----------|-------------|---------------|-----------|
+     | definitely (0) | 3+ | 최소 1개 정량적 데이터 필수 | T1 필수 1개 이상 |
+     | usually (1) | 2+ | 정량 또는 복수 사례 | T1 또는 T2 |
+     | in most cases (2) | 2+ | 유형 무관 | T2 이상 1개 |
+     | presumably (3) | 1+ | 유형 무관 | Tier 무관 |
+     | possibly (4) | 1+ | 유형 무관 | Tier 무관 |
 
      근거 수 < 최소 기준 → ⚠️ major: 근거 부족
      근거 유형 미충족 → ⚠️ major: 근거 유형 불일치
+     Tier 미충족 → ⚠️ major: 출처 신뢰도 부족 (Tier 상향 또는 Qualifier 하향 권고)
 
   2. 필요성 테스트:
      FOR EACH ground:
@@ -254,13 +271,21 @@ FOR EACH section:
 
 ```
 FOR EACH section:
-  1. 근거 강도 평가:
+  1. 근거 강도 평가 (source-credibility.md Tier 보정 적용):
+     기본 strength:
      - 정량 데이터 (통계, 수치, 연구결과) → strength +2
      - 복수 사례/비교 → strength +1
      - 단일 사례/인터뷰 → strength +0
      - 주장만 (근거 없는 assertion) → strength -1
 
-     total_strength = sum(각 ground의 strength)
+     Tier 보정:
+     - T1 출처 기반 → strength × 1.5 (올림)
+     - T2 출처 기반 → strength × 1.0
+     - T3 출처 기반 → strength × 0.7 (내림)
+     - T4 출처 기반 → strength × 0.3 (내림)
+     - 출처 미명시 → strength × 0.5
+
+     total_strength = sum(각 ground의 Tier 보정 strength)
 
   2. Rebuttal 강도 평가:
      - 구체적 반론 + 대응 있음 → rebuttal_strength = strong

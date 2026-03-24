@@ -1,0 +1,258 @@
+# Source Credibility — 출처 신뢰도 등급
+
+리서치 파인딩의 출처를 4단계 Tier로 분류하고, Tier에 따라 논증 내 사용 범위를 제한한다.
+모든 리서치 워크플로우와 challenge 검증이 이 문서를 참조한다.
+
+---
+
+## Tier 정의
+
+| Tier | 이름 | 기준 | Grounds 가중치 | 단독 Grounds 사용 |
+|------|------|------|:---:|:---:|
+| **T1** | 1차 출처 | 학술 논문(peer-reviewed), 정부/공공기관 통계, 국제기구 보고서(UN/OECD/WHO), 공식 기업 IR/SEC filing, 법률/판례 | **20** | ✅ |
+| **T2** | 전문 출처 | 주요 산업 리포트(Gartner/McKinsey/IDC), 공신력 있는 언론(Reuters/Bloomberg/NYT/조선일보/한겨레), 공식 기술 문서, 전문 저널(HBR/MIT Tech Review) | **15** | ✅ |
+| **T3** | 준전문 출처 | 전문가 개인 블로그(도메인 전문성 입증), Medium 검증된 저자, Stack Overflow 고평판 답변, 산업 컨퍼런스 발표 자료, 위키피디아(출처 체인 확인 시) | **8** | ⚠️ 2개 이상 교차검증 시만 |
+| **T4** | 비검증 출처 | 개인 블로그(네이버 블로그, Tistory, Velog 등), 커뮤니티 게시글(Reddit, Quora, 디시인사이드, 클리앙), SNS(Twitter/X, Facebook), 익명 출처, 출처 불명 기사 | **3** | ❌ Backing 전용 |
+
+---
+
+## Tier 판정 알고리즘
+
+```
+FUNCTION assess_tier(source_url, source_content):
+
+  1. 도메인 매칭 (domain_whitelist / domain_blacklist):
+     - whitelist 매칭 → 해당 Tier 즉시 반환
+     - blacklist 매칭 → T4 즉시 반환
+
+  2. 도메인 미매칭 시 콘텐츠 기반 판정:
+     a. 저자 자격:
+        - 학위/소속기관/업계 경력 명시 → Tier 상향 후보
+        - 익명/미상 → T4
+     b. 인용/참고문헌:
+        - 학술 인용 형식 사용 → T1~T2 후보
+        - 인라인 링크만 → T3
+        - 인용 없음 → T4
+     c. 방법론 기술:
+        - 데이터 수집/분석 방법 명시 → T1~T2 후보
+        - 주관적 경험만 → T3~T4
+     d. 발행 시점:
+        - 3년 이내 → 가산 없음
+        - 3~5년 → 💡 minor 경고
+        - 5년 초과 → ⚠️ major 경고 (통계/시장 데이터에 한해)
+
+  3. 최종 Tier = max(도메인 판정, 콘텐츠 판정)
+     - 도메인이 T2이나 콘텐츠가 T3 수준이면 → T2 유지
+     - 도메인이 T4이나 콘텐츠가 T2 수준이면 → T3 상향 (T2까지는 불가)
+
+  RETURN { tier, confidence, reasons[] }
+```
+
+---
+
+## 도메인 분류 기준
+
+### T1 도메인 패턴 (whitelist)
+```
+# 학술
+*.edu, *.ac.*, scholar.google.com, pubmed.ncbi.nlm.nih.gov,
+arxiv.org, doi.org, jstor.org, sciencedirect.com, nature.com,
+springer.com, wiley.com, ieee.org
+
+# 정부/공공
+*.gov, *.go.kr, *.gov.*, data.gov, census.gov,
+kostat.go.kr, kosis.kr, worldbank.org, oecd.org,
+who.int, un.org, imf.org, bis.org
+
+# 기업 공시
+sec.gov, dart.fss.or.kr, ir.* (기업 IR 페이지)
+```
+
+### T2 도메인 패턴
+```
+# 산업 리포트
+gartner.com, mckinsey.com, bcg.com, bain.com,
+idc.com, forrester.com, cb-insights.com, statista.com,
+pitchbook.com, crunchbase.com
+
+# 주요 언론
+reuters.com, bloomberg.com, nytimes.com, wsj.com,
+ft.com, economist.com, bbc.com, apnews.com,
+chosun.com, hani.co.kr, donga.com, mk.co.kr,
+hankyung.com, sedaily.com
+
+# 전문 저널
+hbr.org, technologyreview.com, wired.com, arstechnica.com,
+techcrunch.com, theverge.com, zdnet.com
+```
+
+### T4 도메인 패턴 (blacklist)
+```
+# 개인 블로그 플랫폼
+*.tistory.com, blog.naver.com, *.velog.io,
+brunch.co.kr/@*, *.notion.site (개인 페이지)
+
+# 커뮤니티
+reddit.com/r/*, quora.com, dcinside.com,
+clien.net, ruliweb.com, ppomppu.co.kr, fmkorea.com
+
+# SNS
+twitter.com, x.com, facebook.com, instagram.com,
+threads.net, linkedin.com/posts/*
+
+# 콘텐츠 팜/어그리게이터
+medium.com/@* (비검증 저자), buzzfeed.com
+```
+
+### T3 예외 처리
+
+T4 도메인이라도 다음 조건 충족 시 T3으로 상향:
+- **Reddit**: r/science, r/askscience 의 top answer + 소스 인용 포함
+- **Medium**: 팔로워 10K+, 전문 출판사(publication) 소속
+- **LinkedIn**: 공인된 전문가의 장문 분석 글 (프로필 검증 가능)
+- **개인 블로그**: 저자가 해당 분야 석박사/현직 전문가임이 명시
+
+---
+
+## 논증 내 사용 제한
+
+### Grounds 사용 규칙
+
+```
+Qualifier별 최소 Tier 요구:
+
+| Qualifier | 단독 사용 가능 Tier | T3 허용 조건 | T4 허용 |
+|-----------|:------------------:|:------------:|:-------:|
+| definitely (0) | T1만 | T1 2개 + T3 1개 보조 | ❌ |
+| usually (1) | T1, T2 | T2 1개 + T3 보조 | ❌ |
+| in most cases (2) | T1, T2 | T3 2개 교차검증 | ❌ |
+| presumably (3) | T1, T2, T3 | T3 단독 가능 | ❌ |
+| possibly (4) | 모든 Tier | 모든 Tier | Backing으로만 |
+```
+
+### Backing 사용 규칙
+- 모든 Tier 사용 가능
+- T4는 Backing에서만 허용 (보조 자료, 일화, 사례)
+- T4 출처임을 명시해야 함: `(비검증 출처)`
+
+### 교차검증 규칙
+
+T3 출처를 Grounds에 단독 사용할 수 없을 때:
+```
+교차검증 = 동일 주장을 뒷받침하는 독립된 출처 2개 이상
+  - 같은 원본을 인용하는 2개 출처는 교차검증이 아님
+  - 동일 저자의 다른 글은 교차검증이 아님
+```
+
+---
+
+## Challenge 연동
+
+### Stage 5 (Why So) 강화
+
+기존 근거 유형 평가에 Tier 가중치를 추가한다:
+
+```
+기존:
+  - 정량 데이터 → strength +2
+  - 복수 사례 → strength +1
+  - 단일 사례 → strength +0
+  - 주장만 → strength -1
+
+Tier 보정:
+  각 ground의 strength에 Tier 보정을 적용:
+  - T1 출처 기반 → strength × 1.5 (올림)
+  - T2 출처 기반 → strength × 1.0 (변경 없음)
+  - T3 출처 기반 → strength × 0.7 (내림)
+  - T4 출처 기반 → strength × 0.3 (내림)
+  - 출처 미명시 → strength × 0.5
+
+  total_strength = sum(각 ground의 보정된 strength)
+```
+
+### Stage 6 (Qualifier 보정) 강화
+
+Tier를 고려한 적정 Qualifier 범위 추정:
+
+```
+highest_tier = min(각 ground의 tier)  # 가장 좋은 출처
+tier_penalty:
+  - 모든 Grounds가 T1/T2 → 0 (감점 없음)
+  - T3 비율 > 50% → +1 (qualifier 1단계 하향 압력)
+  - T4가 Grounds에 있음 → +2 (사용 위반 경고 + qualifier 하향)
+
+adjusted_range = 기존 적정 범위 + tier_penalty
+```
+
+---
+
+## Research 워크플로우 연동
+
+### 파인딩 파일 Tier 필드
+
+모든 파인딩 파일 frontmatter에 `tier` 필드를 추가한다:
+
+```yaml
+---
+id: NNN
+type: url | topic | auto | debate | manual
+source: "{URL 또는 검색어}"
+tier: T1 | T2 | T3 | T4
+tier_reasons:
+  - "{판정 이유 1}"
+  - "{판정 이유 2}"
+created: "{ISO8601}"
+relevant_sections: ["{section_id}", ...]
+status: unreviewed
+applied_to: null
+stale_reason: null
+---
+```
+
+### 리서치 출력에 Tier 표시
+
+```
+리서치 완료: {N}건 발견 ({source})
+
+[1] {발견} — {source}
+    📊 신뢰도: T2 (산업 리포트) — Grounds 사용 가능
+
+[2] {발견} — {source}
+    📊 신뢰도: T4 (개인 블로그) — ⚠️ Backing 전용
+```
+
+### accept 시 Tier 경고
+
+```
+T4 출처를 accept할 때:
+  ⚠️ 이 파인딩은 T4 (비검증 출처)입니다.
+  Grounds에 단독 사용할 수 없으며, Backing으로만 활용됩니다.
+  [1] Backing으로 accept
+  [2] reject
+```
+
+---
+
+## config.json 연동
+
+```json
+"credibility": {
+  "custom_whitelist": [],
+  "custom_blacklist": [],
+  "strict_mode": false
+}
+```
+
+- `custom_whitelist`: 사용자가 추가하는 T1/T2 도메인
+- `custom_blacklist`: 사용자가 추가하는 T4 강제 도메인
+- `strict_mode`: `true`이면 T3도 Grounds 단독 사용 불가 (학술 수준)
+
+---
+
+## 핵심 원칙
+
+- **출처 없는 근거는 근거가 아니다** — 출처 미명시 Grounds는 challenge에서 자동 플래그
+- **Tier는 도메인 + 콘텐츠 복합 판정** — 도메인만으로 자동 분류하지 않음
+- **T4도 가치가 있다** — Backing, 일화, 사용자 목소리 등으로 활용
+- **인간이 최종 판단** — Tier는 자동 판정하되, 사용자가 override 가능
+- **교차검증은 독립성이 핵심** — 같은 원본 인용은 교차검증이 아님

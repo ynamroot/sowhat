@@ -37,6 +37,7 @@ stateDiagram-v2
 - `/sowhat:research URL` — URL 분석
 - `/sowhat:research {topic}` — 토픽 검색
 - `/sowhat:research` (인자 없음) — 자율 리서치
+- `/sowhat:inject {section} {url|file}` — 수동 증거 주입
 - debate 중 Research-Agent 자동 트리거
 
 ### 파일 생성 규칙
@@ -53,15 +54,22 @@ slug: 검색어/URL에서 추출한 kebab-case 식별자
 ```yaml
 ---
 id: NNN
-type: url | topic | auto | debate
+type: url | topic | auto | debate | manual
 source: "{URL 또는 검색어}"
+tier: T1 | T2 | T3 | T4
+tier_reasons:
+  - "{판정 이유}"
 created: "{ISO8601}"
 relevant_sections: ["{section_id}", ...]
 status: unreviewed
 applied_to: null
 stale_reason: null
+citations: []
 ---
 ```
+
+> **tier 필드**: `references/source-credibility.md`의 판정 알고리즘에 따라 자동 설정.
+> **citations 필드**: 이 파인딩을 인용한 섹션-필드 목록 (예: `["01-problem.Grounds[2]"]`). `references/citation-graph.md` 참조.
 
 ---
 
@@ -115,19 +123,64 @@ accepted 파인딩이 실제로 섹션에 반영되면:
 
 ## 만료 (Staleness)
 
+### Tier 기반 만료 기간
+
+파인딩의 `tier`에 따라 만료 기간이 다르다. 학술 자료는 느리게 변하고, 커뮤니티 자료는 빠르게 변한다.
+
+| Tier | 일반 근거 만료 기간 | statistics/시장 데이터 만료 기간 | 근거 |
+|------|---------------------|-------------------------------|------|
+| T1 (학술) | 24개월 (730일) | 12개월 (365일) | 학술 논문은 느리게 변함 |
+| T2 (산업 리포트) | 12개월 (365일) | 6개월 (180일) | 산업 보고서는 연간 갱신 주기 |
+| T3 (블로그) | 6개월 (180일) | 3개월 (90일) | 블로그 내용은 빠르게 구식화 |
+| T4 (커뮤니티) | 3개월 (90일) | 45일 | 커뮤니티 정보는 가장 빠르게 변함 |
+
+> **statistics 만료 기간**: 일반 만료 기간의 절반. 시장 데이터, 통계 수치, 가격 정보 등은 빠르게 변하므로 더 짧은 주기로 검증한다.
+> statistics 사용 여부는 파인딩이 반영된 섹션의 필드가 `Grounds`이고 내용에 수치/통계가 포함된 경우 적용.
+
 ### 자동 만료 감지
 
 `/sowhat:progress` 또는 `/sowhat:resume` 실행 시 accepted 파인딩의 신선도를 검사한다:
 
 ```
+STALE_PERIODS = {
+  T1: { default: 730, statistics: 365 },
+  T2: { default: 365, statistics: 180 },
+  T3: { default: 180, statistics: 90 },
+  T4: { default: 90,  statistics: 45  }
+}
+
 FOR EACH finding WITH status == "accepted":
   age = now - finding.created
+  tier = finding.tier
 
-  IF age > 180 days (6개월):
+  # statistics 사용 여부 판정
+  is_statistics = finding이 Grounds에 반영되었고 수치/통계 포함
+  threshold = is_statistics ? STALE_PERIODS[tier].statistics : STALE_PERIODS[tier].default
+
+  IF age > threshold:
     finding.status = "stale"
-    finding.stale_reason = "age"
+    finding.stale_reason = "age:{tier}:{threshold}days"
+```
 
-  # URL 기반 파인딩: 소스 접근 가능성은 검사하지 않음 (비용 대비 효용 낮음)
+### 콘텐츠 기반 만료 트리거
+
+나이 기반 만료 외에 다음 조건도 검사한다:
+
+**1. URL 접근 불가 (404)**
+```
+FOR EACH finding WITH status == "accepted" AND type == "url":
+  IF source URL이 404 응답:
+    finding.status = "stale"
+    finding.stale_reason = "source_unavailable"
+```
+> URL 검사는 `/sowhat:research review` 실행 시에만 수행 (progress/resume에서는 네트워크 비용 회피).
+
+**2. 동일 토픽 최신 파인딩 존재 (경고만)**
+```
+FOR EACH finding WITH status == "accepted":
+  IF 같은 relevant_sections에 더 최근 accepted 파인딩 존재:
+    # stale로 자동 전환하지 않음 — 경고만 출력
+    WARN "⚠️ [{id}] {slug}: 같은 토픽의 더 최신 파인딩 [{newer_id}]이 있음. 검토 권장."
 ```
 
 ### 만료 알림
@@ -135,9 +188,10 @@ FOR EACH finding WITH status == "accepted":
 ```
 ⚠️  만료된 파인딩: {N}건
 
-  [{id}] {slug} — 생성: {created} ({age}일 전)
+  [{id}] {slug} — 생성: {created} ({age}일 전)  [Tier: {tier}]
     관련 섹션: {sections}
     만료 이유: {reason}
+    {만료 기준: {threshold}일 (Tier {tier}, {statistics 여부})}
 
   [1] 재확인 → accept 유지
   [2] 기각 → reject로 변경
@@ -167,17 +221,18 @@ FOR EACH finding WITH status == "accepted":
 
 ```json
 "research": {
-  "count": 5,        // 전체 파인딩 수
-  "unreviewed": 2,   // 미검토 수
-  "last_research": "2024-01-15T14:30:45Z"
+  "count": 5,
+  "unreviewed": 2,
+  "last_research": "2024-01-15T14:30:45Z",
+  "tier_distribution": { "T1": 1, "T2": 2, "T3": 1, "T4": 1 }
 }
 ```
 
 ### 카운트 업데이트 시점
 
-| 액션 | count | unreviewed |
-|------|-------|-----------|
-| 파인딩 생성 | +1 | +1 |
-| accept | — | -1 |
-| reject | — | -1 |
-| stale (accepted → stale) | — | +1 (재검토 필요) |
+| 액션 | count | unreviewed | tier_distribution |
+|------|-------|-----------|-------------------|
+| 파인딩 생성 | +1 | +1 | tier별 +1 |
+| accept | — | -1 | — |
+| reject | — | -1 | — |
+| stale (accepted → stale) | — | +1 (재검토 필요) | — |
