@@ -1,5 +1,6 @@
 ---
 model: claude-opus-4-6
+description: settled 섹션들을 종합해 인간이 읽는 문서를 생성한다. "문서 만들어", "draft", "PRD 생성", "제안서 작성", "보고서", "문서화", "정리해서 써줘", "executive summary", "투자 제안서" 등 논증 결과를 외부 공유용 문서로 변환할 때 사용. 형식과 독자 맞춤 선택 지원.
 ---
 # /sowhat:draft — 문서 초안 생성
 

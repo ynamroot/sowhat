@@ -1,5 +1,6 @@
 ---
 model: claude-opus-4-6
+description: settled 섹션의 논증을 수정하고 영향받는 섹션을 자동 점검한다. "수정", "revise", "논증 고치기", "claim 바꾸기", "warrant 수정", "grounds 추가", "open question 해결", "내용 변경" 등 이미 전개된 섹션의 특정 필드를 고치고 싶을 때 사용. 수정 후 오염 범위 자동 탐지.
 ---
 # /sowhat:revise — 논증 수정 + 영향 전파
 

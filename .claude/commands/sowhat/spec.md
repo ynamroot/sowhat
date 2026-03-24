@@ -1,5 +1,6 @@
 ---
 model: claude-sonnet-4-6
+description: 명세 레이어 섹션을 핑퐁으로 전개한다. "명세", "spec", "스펙 작성", "기능 요구사항", "데이터 모델", "API 설계", "엣지 케이스", "인수 기준", "actors 정의" 등 finalize-planning 이후 명세 섹션(04~09)을 구체화할 때 사용. 기획 내용과의 정합성 유지.
 ---
 # /sowhat:spec — 명세 섹션 핑퐁
 
