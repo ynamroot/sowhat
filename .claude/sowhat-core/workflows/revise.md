@@ -74,7 +74,8 @@ Field 값: `claim` / `grounds` / `warrant` / `qualifier` / `rebuttal` / `backing
 섹션의 전체 논증 구조를 인라인으로 출력한다.
 
 ```
-━━━ {섹션 이름} [{status}] ━━━
+----------------------------------------
+> {섹션 이름} [{status}]
 
 🧩 Key Argument
   {thesis_argument — 이 섹션이 지지하는 상위 논거}
@@ -96,7 +97,7 @@ Field 값: `claim` / `grounds` / `warrant` / `qualifier` / `rebuttal` / `backing
 
 ❓ Open Questions
   {Open Questions | 없음}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 field 인자가 없으면 선택지를 출력한다:
@@ -121,9 +122,9 @@ field 인자가 없으면 선택지를 출력한다:
 
 ```
 현재 {Field}:
-───────────────
+----------------------------------------
 {현재 내용}
-───────────────
+----------------------------------------
 새 내용을 입력해주세요.
 (Qualifier 수정 시: definitely / usually / in most cases / presumably / possibly 중 선택)
 ```
@@ -198,7 +199,8 @@ git commit -m "revise({section}): {수정된 field} 변경"
 ### 검증 결과 출력
 
 ```
-━━━ 스코프 Challenge 결과 ━━━
+----------------------------------------
+> 스코프 Challenge 결과
 
 🔍 수정 섹션: {section}
   {문제 있으면 공격 리포트 / 통과하면 ✅ 통과}
@@ -212,7 +214,7 @@ git commit -m "revise({section}): {수정된 field} 변경"
 
 🟢 안전한 섹션 ({M}개)
   - {섹션 이름}: 영향 없음
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 오염 섹션이 없으면:
@@ -257,24 +259,16 @@ config.json, 00-thesis.md 체크박스 해제 (해당되는 경우) 업데이트
   상태: {이전} → {이후}
   오염: {N}개 섹션 처리됨
 
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
+[1] 오염 섹션 재전개 (/sowhat:expand {오염섹션})
+[2] 수정 내용 논증 강화 (/sowhat:debate {section})
+[3] 전체 트리 재검증 (/sowhat:challenge)
+[4] 추가 수정 (/sowhat:revise {section})
+----------------------------------------
 
-**{오염섹션}: 재전개** — 오염된 섹션을 재전개
 
-`/sowhat:expand {오염섹션}`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
-
-**또한 가능:**
-- `/sowhat:debate {section}` — 수정 내용 논증 강화
-- `/sowhat:challenge` — 전체 트리 재검증
-- `/sowhat:revise {section}` — 추가 수정
-
----
 ```
 
 ---

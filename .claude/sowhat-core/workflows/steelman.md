@@ -190,7 +190,8 @@ FOR EACH section:
 ## 출력 형식
 
 ```
-━━━ Steelman 완료 ━━━
+----------------------------------------
+Steelman 완료
 
 Anti-Thesis: "{strongest opposing position}"
 
@@ -204,7 +205,7 @@ Anti-Thesis: "{strongest opposing position}"
 파일: counter/STEELMAN-REPORT.md
 
 다음: /sowhat:revise {weakest section}
-━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 ---

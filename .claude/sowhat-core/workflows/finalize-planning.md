@@ -213,23 +213,15 @@ finalize-planning 완료 — 기획 레이어 → 명세 레이어 전환. 6개 
   - 09-acceptance-criteria.md (draft)
   - Issues: #{numbers}
 
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
+[1] 첫 명세 섹션 핑퐁 시작 (/sowhat:spec 04)
+[2] 다른 명세 섹션부터 시작 (/sowhat:spec {other})
+[3] 전체 현황 확인 (/sowhat:progress)
+----------------------------------------
 
-**04-actors: Actors 정의** — 첫 명세 섹션 핑퐁 시작
 
-`/sowhat:spec 04`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
-
-**또한 가능:**
-- `/sowhat:spec {other}` — 다른 명세 섹션부터 시작
-- `/sowhat:progress` — 전체 현황 확인
-
----
 ```
 
 ## 핵심 원칙

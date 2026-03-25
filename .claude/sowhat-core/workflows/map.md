@@ -1,4 +1,4 @@
-# /sowhat:map — 논증 흐름 시각화
+# /sowhat:map — 논증 구조 조회
 
 <!--
 @metadata
@@ -11,26 +11,22 @@ continuation:
 status_transitions: []
 -->
 
-논증의 흐름을 **Mermaid 다이어그램**으로 즉시 시각화하여 응답에 출력한다. `$ARGUMENTS`
-
-파일 저장이 아닌 **지금 바로 보는 것**이 목적이다.
+논증 구조를 **터미널 인라인 텍스트**로 즉시 출력한다.
+Mermaid나 외부 도구 없이, 인덴트 기반 텍스트로 논리 구조를 빠르게 파악한다.
 
 ---
 
 ## 인자 파싱
 
 ```
-/sowhat:map [section] [--save] [--export]
+/sowhat:map [section] [--export]
 ```
 
 | 인자 | 의미 |
 |------|------|
-| 인자 없음 | 전체 논증 흐름 맵 |
-| `{section}` (번호 또는 이름) | 해당 섹션 상세 맵 |
-| `--save` | 파일로도 저장 (`maps/overview.md` 또는 `maps/local/{name}.md`) |
-| `--export` | `export/ARGUMENT-MAP.md`로 정식 논증 맵 생성 (Toulmin 구조 전체 포함) |
-
-모드 결정: `{section}` 존재 → Local 모드, 없으면 → Global 모드
+| 인자 없음 | 전체 논증 구조 (Global) |
+| `{section}` (번호 또는 이름) | 해당 섹션 Toulmin 상세 (Local) |
+| `--export` | `export/ARGUMENT-MAP.md`로 정식 스냅샷 저장 |
 
 ---
 
@@ -38,202 +34,221 @@ status_transitions: []
 
 1. `planning/config.json` 로드
 2. `00-thesis.md` 로드
+3. 각 섹션 파일 로드 (frontmatter + Toulmin 필드)
 
 ---
 
-## 노드 설계
+## Global 모드 (인자 없음)
 
-각 노드는 **파일명이 아닌 실제 명제 문장**을 담는다.
+### 데이터 수집
 
-### 노드 타입
-
-| 타입 | 아이콘 | 내용 |
-|------|--------|------|
-| Thesis | 💡 | Answer 전체 문장 |
-| Key Argument | 🧩 | Key Argument 한 줄 |
-| Claim | 📌 | 실제 주장 문장 |
-| Grounds | 🔍 | 근거/자료 핵심 문장 |
-| Warrant | 🔗 | 추론 연결 문장 |
-| Rebuttal | ⚡ | 반박 문장 |
-| Response | ↩ | 재반론 문장 |
-
-### 노드 스타일 (Mermaid classDef)
-
-```
-classDef thesis fill:#91caff,stroke:#4096ff,color:#000
-classDef keyarg fill:#d3adf7,stroke:#9254de,color:#000
-classDef settled fill:#b7eb8f,stroke:#52c41a,color:#000
-classDef discussing fill:#ffe58f,stroke:#faad14,color:#000
-classDef draft fill:#f0f0f0,stroke:#bfbfbf,color:#000
-classDef revision fill:#ffccc7,stroke:#ff4d4f,color:#000
-classDef grounds fill:#e6f4ff,stroke:#91caff,color:#000
-classDef rebuttal fill:#fff1f0,stroke:#ffa39e,color:#000
-```
-
-### 텍스트 처리
-
-- 노드 내 텍스트는 **50자 이내**로 잘라 `...` 추가
-- `\n` 사용 금지 — Mermaid 노드는 단일행만 지원
-- 빈 필드는 노드 생성 안 함 (생략)
-
----
-
-## Global 모드
-
-### 1. 데이터 수집
-
-`00-thesis.md` 에서:
-- Answer (Thesis 문장)
-- Key Arguments 목록
+`00-thesis.md`에서:
+- Answer, Key Arguments 목록
 
 각 섹션 파일에서:
-- `status`
-- Claim 핵심 문장
-- Grounds 핵심 문장 (있으면)
-- Warrant 핵심 문장 (있으면)
-- Rebuttal 문장 (있으면)
-- `thesis_argument` (어느 Key Arg에 속하는지)
+- `status`, Claim, Grounds 핵심, Warrant 핵심, Rebuttal 핵심, Qualifier
 
-### 2. Mermaid 생성 규칙
-
-`flowchart TD` 사용 (위→아래).
+### 출력 형식
 
 ```
-flowchart TD
-  T["💡 {Answer 50자...}"]:::thesis
+----------------------------------------
+{project} — 논증 구조
+{settled}/{total} settled
+----------------------------------------
 
-  T --> KA1["🧩 {Key Arg 1}"]:::keyarg
-  T --> KA2["🧩 {Key Arg 2}"]:::keyarg
+Thesis: "{Answer}"
 
-  KA1 --> S1["📌 {Claim 50자...}"]:::settled
-  S1 -.->|근거| G1["🔍 {Grounds 50자...}"]:::grounds
-  S1 -->|반박| R1["⚡ {Rebuttal 50자...}"]:::rebuttal
-  R1 -->|재반론| RE1["↩ {Response 50자...}"]:::settled
+  01 {section-name} [{status}]
+     Claim: {Claim 한 줄}
+     Grounds: {Grounds 핵심 — 50자}
+     Warrant: {Warrant 핵심 — 50자}
+     Rebuttal: {Rebuttal 핵심 — 50자} → {대응 요약}
 
-  KA2 --> S2["📌 {Claim 50자...}"]:::discussing
+  02 {section-name} [{status}]
+     Claim: {Claim 한 줄}
+     Grounds: (미완성)
 
-  classDef thesis fill:#91caff,stroke:#4096ff,color:#000
-  classDef keyarg fill:#d3adf7,stroke:#9254de,color:#000
-  classDef settled fill:#b7eb8f,stroke:#52c41a,color:#000
-  classDef discussing fill:#ffe58f,stroke:#faad14,color:#000
-  classDef grounds fill:#e6f4ff,stroke:#91caff,color:#000
-  classDef rebuttal fill:#fff1f0,stroke:#ffa39e,color:#000
+  03 {section-name} [{status}]
+     (미전개)
+
+----------------------------------------
 ```
 
-**연결 원칙:**
-- Thesis → 각 Key Argument
-- Key Argument → 해당 섹션의 Claim
-- Claim → Grounds (있으면, 점선 `-.->|근거|`)
-- Claim → Warrant (있으면, 점선 `-.->|추론|`)
-- Claim → Rebuttal (있으면, 실선 `-->|반박|`)
-- Rebuttal → Response (있으면, 실선 `-->|재반론|`)
+**출력 규칙:**
 
-### 3. 응답 출력 형식
+- **Thesis**: Answer 전문. 80자 초과 시 줄바꿈
+- **섹션 헤더**: `  {번호} {이름} [{status}]` — 인덴트 2칸
+- **Toulmin 필드**: 인덴트 5칸. 값이 있는 필드만 출력
+- **필드값**: 50자 초과 시 `...` 으로 자름
+- **미전개 섹션** (`draft` + 필드 없음): `(미전개)` 한 줄로 축약
+- **status 표기**: `[settled]` `[discussing]` `[draft]` `[needs-revision]` `[invalidated]`
+- **Rebuttal**: 반박 + 대응이 모두 있으면 `→`로 연결. 대응 없으면 반박만 표시
 
-다이어그램을 **응답 본문에 직접 렌더링**한다:
+### 출력 예시
 
-````markdown
-## 논증 흐름 맵
-
-```mermaid
-{생성된 다이어그램}
 ```
+----------------------------------------
+my-saas-product — 논증 구조
+2/3 settled
+----------------------------------------
 
-**{settled}/{total} settled** | needs-revision: {목록 또는 없음}
-````
+Thesis: "통합 비용 해소로 B2B SaaS 이탈을 막을 수 있다"
 
-`--save` 플래그 있을 때: `mkdir -p maps/local` 후 `maps/overview.md`에 추가 저장:
-```
-💾 maps/overview.md 저장 완료
+  01 market-size [settled]
+     Claim: 국내 SaaS 시장은 연 28% 성장 중이다
+     Grounds: IDC 2024 리포트, CAGR 27.8%, TAM $12.3B
+     Warrant: 성장 시장은 신규 진입자에게 기회
+     Rebuttal: 레드오션 가능성 → 니치 전략으로 대응
+
+  02 tech-feasibility [settled]
+     Claim: 기존 인프라로 6개월 내 MVP 가능
+     Grounds: React+Node 검증 완료, AWS 운영 중
+     Warrant: 검증된 스택 + 기존 인프라 = 빠른 개발
+
+  03 competition [discussing]
+     Claim: 기존 솔루션 대비 통합 비용 70% 절감
+     Grounds: 경쟁사 3곳 비교 분석 진행 중
+
+----------------------------------------
 ```
 
 ---
 
-## Local 모드
+## Local 모드 (섹션 지정)
 
-특정 섹션의 Toulmin 구조 전체를 더 상세하게 보여준다.
+특정 섹션의 Toulmin 구조 전체를 상세히 출력한다.
 
-### 1. 섹션 파일 확인
+### 섹션 파일 확인
 
 - 숫자 → `{N}-*.md` 패턴 검색
 - 이름 → `*-{name}.md` 패턴 검색
 - 없으면 → `❌ 섹션을 찾을 수 없습니다: {section}`
 
-### 2. 데이터 수집
-
-- `00-thesis.md`: Answer, 해당 섹션의 Key Argument
-- 현재 섹션: Claim, Grounds, Warrant, Backing, Qualifier, Rebuttal, Open Questions 전체
-
-### 3. Mermaid 생성 (섹션 상세)
+### 출력 형식
 
 ```
-flowchart TD
-  T["💡 {Answer 50자}"]:::thesis
-  KA["🧩 {Key Arg}"]:::keyarg
-  C["📌 {Claim 문장}"]:::{status}
-  G["🔍 {Grounds 핵심}"]:::grounds
-  W["🔗 {Warrant 핵심}"]:::grounds
-  B["📚 {Backing 핵심}"]:::grounds
-  Q["🎯 {Qualifier}"]:::draft
-  R["⚡ {Rebuttal 문장}"]:::rebuttal
-  OQ["❓ {Open Questions}"]:::draft
+----------------------------------------
+{N}-{section-name} [{status}]
+Scheme: {scheme} | Qualifier: {qualifier}
+----------------------------------------
 
-  T --> KA --> C
-  C -.->|근거| G
-  C -.->|추론| W
-  W -.->|뒷받침| B
-  C -.->|한정| Q
-  C -->|반박| R
-  C -.->|미해결| OQ
+Thesis: "{Answer}"
+Key Argument: "{thesis_argument}"
+
+Claim:
+  {Claim 전문}
+
+Grounds:
+  1. {Ground 1}
+  2. {Ground 2}
+  3. {Ground 3}
+
+Warrant:
+  {Warrant 전문}
+
+Backing:
+  {Backing 전문 — 없으면 이 블록 생략}
+
+Qualifier: {qualifier 값}
+  {qualifier 설명 — 있으면}
+
+Rebuttal:
+  {Rebuttal 전문}
+  → 대응: {Response — 있으면}
+
+Open Questions:
+  - {미해결 질문 1}
+  - {미해결 질문 2}
+
+----------------------------------------
 ```
 
-### 4. 응답 출력 형식
+**출력 규칙:**
 
-````markdown
-## {섹션 이름} — 논증 상세
+- 필드 라벨은 볼드 없이 `Label:` 형식
+- 값이 비어있는 필드 블록은 통째로 생략
+- Grounds는 번호 매기기 (복수일 때)
+- Open Questions가 없으면 블록 생략
+- Claim/Warrant/Rebuttal은 전문 출력 (잘라내지 않음)
 
-```mermaid
-{생성된 다이어그램}
+### 출력 예시
+
 ```
-````
+----------------------------------------
+01-market-size [settled]
+Scheme: statistics | Qualifier: 높은 확신
+----------------------------------------
 
-`--save` 플래그 있을 때만 `maps/local/{section-name}.md`에 추가 저장.
+Thesis: "통합 비용 해소로 B2B SaaS 이탈을 막을 수 있다"
+Key Argument: "시장 규모가 충분히 크다"
+
+Claim:
+  국내 SaaS 시장은 연 28% 성장 중이며
+  2026년까지 TAM $12.3B에 달할 것이다
+
+Grounds:
+  1. IDC 2024 리포트: 국내 SaaS 시장 CAGR 27.8%
+  2. 소프트웨어산업협회: 2023년 기준 $8.1B
+  3. Gartner 예측: 아시아 SaaS 시장 2026 $45B
+
+Warrant:
+  CAGR 27%+ 시장은 신규 진입자가 시장 점유율을
+  확보할 수 있는 충분한 성장 여력이 있다
+
+Backing:
+  미국 SaaS 시장도 유사한 성장률 시기(2015-2020)에
+  다수의 유니콘이 탄생했다
+
+Qualifier: 높은 확신
+  공신력 있는 복수 출처 교차 검증 완료
+
+Rebuttal:
+  시장 성장이 기존 대형 벤더의 확장으로 흡수될 수 있다
+  → 대응: 니치 세그먼트(중소기업 HR)는 대형 벤더 미진출 영역
+
+----------------------------------------
+```
 
 ---
 
-## Debate 맵 (자동 호출)
+## Debate 비교 (자동 호출)
 
 `/sowhat:debate` 라운드 완료 시 자동 호출.
-
 이전 상태는 git에서 가져온다:
+
 ```bash
 git show HEAD~1:{section-file}.md
 ```
 
-이전 Claim/Warrant/Rebuttal(회색) vs 현재(파랑) 비교를 **응답에 직접 출력**:
+### 출력 형식
 
-````markdown
-## debate 변화 — {섹션} 라운드 {N}
-
-```mermaid
-flowchart LR
-  subgraph Before["라운드 {N-1}"]
-    BC["📌 {이전 Claim}"]:::draft
-    BR["⚡ {이전 Rebuttal}"]:::rebuttal
-  end
-  subgraph After["라운드 {N}"]
-    AC["📌 {현재 Claim}"]:::settled
-    AR["⚡ {현재 Rebuttal}"]:::rebuttal
-  end
-  BC -->|"debate"| AC
 ```
-````
+----------------------------------------
+debate 변화 — {섹션} 라운드 {N}
+----------------------------------------
+
+Before:
+  Claim: {이전 Claim}
+  Rebuttal: {이전 Rebuttal}
+
+After:
+  Claim: {현재 Claim}
+  Rebuttal: {현재 Rebuttal}
+
+변경점:
+  - {변경된 필드}: {변경 요약}
+  - {변경된 필드}: {변경 요약}
+
+----------------------------------------
+```
+
+변경되지 않은 필드는 생략한다. 변경된 필드만 Before/After에 포함.
 
 ---
 
 ## `--export` 모드: ARGUMENT-MAP.md 생성
 
-`--export` 플래그가 있으면 Mermaid 다이어그램 출력에 더해 `export/ARGUMENT-MAP.md`를 생성한다.
+`--export` 플래그가 있으면 터미널 출력에 더해 `export/ARGUMENT-MAP.md`를 생성한다.
 이 파일은 논증의 **Toulmin 구조 전체 스냅샷**으로, draft 산출물과 독립적으로 관리된다.
 
 ```bash
@@ -303,15 +318,15 @@ git add export/ARGUMENT-MAP.md
 git commit -m "map: export argument map snapshot"
 ```
 
-**용도**: draft 산출물과 분리하여, 논증 구조 자체를 공유·아카이브·비교할 때 사용.
-프로젝트 진행 중 여러 시점에서 `--export`를 실행하면 논증 진화 과정을 추적할 수 있다.
+**용도**: 논증 구조 자체를 공유·아카이브·비교할 때 사용.
+여러 시점에서 `--export`를 실행하면 논증 진화 과정을 추적할 수 있다.
 
 ---
 
 ## 핵심 원칙
 
-- **인라인 우선** — 파일 저장이 아닌 응답 본문에 Mermaid 코드블록으로 직접 출력
-- **`--save`는 옵션** — 명시적으로 요청할 때만 파일 저장
-- **`--export`는 정식 산출물** — `export/ARGUMENT-MAP.md`로 Toulmin 전체 구조 저장
-- **명제 중심** — 노드 내용은 파일명이 아닌 실제 주장·근거·반박 문장
-- **50자 제한** — 30자보다 넓게 허용해 내용 전달력 확보
+- **터미널 인라인** — 외부 도구 없이 즉시 확인 가능한 텍스트 출력
+- **인덴트 기반 계층** — 특수문자 없이 공백 인덴트만으로 구조 표현
+- **명제 중심** — 파일명이 아닌 실제 주장·근거·반박 문장을 표시
+- **생략 원칙** — 비어있는 필드/블록은 출력하지 않음
+- **`--export`는 정식 산출물** — `export/ARGUMENT-MAP.md`로 저장하는 유일한 경로

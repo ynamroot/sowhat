@@ -69,12 +69,11 @@ status_transitions: []
 
 2. **현재 브랜치 이름 질문** (branches.json이 없는 경우):
    ```
-   ┌─── 분기 생성: {section} ─────────────────────────┐
-   │ 현재 논증을 보존하면서 대안 경로를 탐색합니다.     │
-   │                                                    │
-   │ 현재 논증의 이름을 지정하세요:                      │
-   │ (예: saas-model, conservative-estimate, plan-a)     │
-   └────────────────────────────────────────────────────┘
+   > 분기 생성: {section}
+   > 현재 논증을 보존하면서 대안 경로를 탐색합니다.
+   >
+   > 현재 논증의 이름을 지정하세요:
+   > (예: saas-model, conservative-estimate, plan-a)
    ```
 
 3. 사용자가 현재 브랜치 이름을 제공하면:
@@ -181,7 +180,8 @@ status_transitions: []
 
 5. 비교 결과 출력:
    ```
-   ━━━ Branch 비교: {section} ━━━
+   ----------------------------------------
+   Branch 비교: {section}
 
                     {branch-1}      {branch-2}      ...
    Claim:          "{요약}"         "{요약}"
@@ -191,7 +191,7 @@ status_transitions: []
    Rebuttal:       {N}개            {N}개
 
    ✅ 추천: {최고 점수 브랜치} (강도 우위 +{차이})
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ----------------------------------------
    ```
 
 6. 점수 차이가 10 미만이면 추천 대신:
@@ -201,10 +201,11 @@ status_transitions: []
 
 7. 비교 후 행동 제안:
    ```
-   다음 선택:
-   - /sowhat:branch merge {section} {추천 브랜치} — 추천 브랜치를 채택
-   - /sowhat:debate {section} — 활성 브랜치를 더 강화
-   - /sowhat:branch {section} — 새 대안 추가
+   다음 액션:
+
+   [1] 추천 브랜치를 채택 (/sowhat:branch merge {section} {추천 브랜치})
+   [2] 활성 브랜치를 더 강화 (/sowhat:debate {section})
+   [3] 새 대안 추가 (/sowhat:branch {section})
    ```
 
 ---
@@ -221,18 +222,16 @@ status_transitions: []
 
 3. **confirm-merge Checkpoint** — 인간 승인을 받는다:
    ```
-   ┌─── confirm-merge ──────────────────────────────┐
-   │ {branch-name}을 {section}의 메인 논증으로       │
-   │ 채택합니다.                                     │
-   │                                                  │
-   │ 승인 브랜치: {branch-name} ({strength}/100)      │
-   │ 보관 브랜치: {나머지 목록}                        │
-   │                                                  │
-   │ 보관 브랜치의 Rebuttal이 승인 브랜치에            │
-   │ 추가 반론으로 제안됩니다.                         │
-   │                                                  │
-   │ 진행하시겠습니까? (y/n)                           │
-   └──────────────────────────────────────────────────┘
+   > confirm-merge
+   > {branch-name}을 {section}의 메인 논증으로 채택합니다.
+   >
+   > 승인 브랜치: {branch-name} ({strength}/100)
+   > 보관 브랜치: {나머지 목록}
+   >
+   > 보관 브랜치의 Rebuttal이 승인 브랜치에
+   > 추가 반론으로 제안됩니다.
+   >
+   > 진행하시겠습니까? (y/n)
    ```
 
 4. 승인 시:
@@ -325,12 +324,11 @@ status_transitions: []
 브랜치가 활성화된 상태에서는 컨텍스트 배너에 브랜치 정보를 추가한다:
 
 ```
-┌─── 진행 컨텍스트 ──────────────────────────────────────┐
-│ Thesis: "{thesis_answer}"                              │
-│ 이 섹션 논거: "{thesis_argument}"                       │
-│ 🔀 브랜치: {active-branch} ({section})                  │
-│ 스텝 {N}/9 — {스텝명}                                  │
-└────────────────────────────────────────────────────────┘
+> 진행 컨텍스트
+> Thesis: "{thesis_answer}"
+> 이 섹션 논거: "{thesis_argument}"
+> 브랜치: {active-branch} ({section})
+> 스텝 {N}/9 — {스텝명}
 ```
 
 ---

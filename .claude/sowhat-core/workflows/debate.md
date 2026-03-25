@@ -362,18 +362,18 @@ Pro-Agent의 방어가 공격의 논리적 취약점을 **직접 해소했는가
 판정 후 인간에게 `verify-argument` checkpoint를 제시한다 (`references/checkpoints.md` 참조):
 
 ```
-┌─── verify-argument (round {N}) ───────────────┐
-│ Con 공격: {공격 요약 한 줄}                    │
-│ Pro 방어: {방어 요약 한 줄}                    │
-│ 판정: {outcome} — {이유 한 줄}                 │
-│                                                │
-│ [A] 승인 — 판정 적용                           │
-│ [O] 판정 변경 — {다른 outcome 선택}            │
-│ [S] 중단 — debate 보류                         │
-└────────────────────────────────────────────────┘
+**[verify-argument]** round {N}
+
+> Con 공격: {공격 요약 한 줄}
+> Pro 방어: {방어 요약 한 줄}
+> 판정: {outcome} — {이유 한 줄}
+
+[1] 승인 — 판정 적용
+[2] 판정 변경 — {다른 outcome 선택}
+[3] 중단 — debate 보류
 ```
 
-인간이 `[O]`를 선택하면 인간의 판정을 우선한다 (이유 기록 필수).
+인간이 `[2]`를 선택하면 인간의 판정을 우선한다 (이유 기록 필수).
 
 | 결과 | 판정 기준 | 섹션 status 변경 |
 |------|-----------|------------------|
@@ -601,7 +601,7 @@ round_history = [
 ## Post-Debate 요약 및 인간 결정
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 📊 Debate 결과: {section}
   라운드: {N}
   결과: {strengthened | modified | weakened | broken}
@@ -616,7 +616,7 @@ round_history = [
   [2] cherry-pick (선택적 수용)
   [3] branch 보류 (나중에 결정)
   [4] branch 삭제 (debate 기각)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 인간의 선택에 따라:
@@ -695,37 +695,23 @@ outcome에 따라 다음 안내를 표시한다:
 
 **strengthened / modified** (섹션 유효):
 ```
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
-
-**{section}: 논증 확정** — 강화된 섹션을 settled로 전환
-
-`/sowhat:settle {section}`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
+[1] 논증 확정 (settle {section})
+[2] 전체 상태 확인 (progress)
+----------------------------------------
 ```
 
 **weakened** (needs-revision):
 ```
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
-
-**{section}: 논거 보강** — needs-revision 상태, 재전개 필요
-
-`/sowhat:expand {section}`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
-
-**또한 가능:**
-- `/sowhat:revise {section}` — 특정 필드만 수정
-
----
+[1] 논거 보강 — 재전개 (expand {section})
+[2] 특정 필드만 수정 (revise {section})
+[3] 전체 상태 확인 (progress)
+----------------------------------------
 ```
 
 **broken / invalidated**:
@@ -738,7 +724,6 @@ outcome에 따라 다음 안내를 표시한다:
 
 `/sowhat:expand {section}` 또는 `/sowhat:init` (thesis 수정)
 
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
 
 ---
 ```
@@ -774,9 +759,9 @@ outcome에 따라 다음 안내를 표시한다:
 ⚠️  오래된 debate 브랜치 발견
   {branch_name} — 마지막 커밋: {date} ({N}일 전)
 
-  [M] main으로 merge
-  [D] 브랜치 삭제
-  [K] 유지 (다음 세션에서 다시 확인)
+  [1] main으로 merge
+  [2] 브랜치 삭제
+  [3] 유지 (다음 세션에서 다시 확인)
 ```
 
 ### 동시 debate 방지

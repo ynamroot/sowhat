@@ -99,9 +99,9 @@ git status --porcelain 2>/dev/null
 ## 4. 상태 출력
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 🔄 {project} — 세션 재개
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 ### 중단된 작업이 있을 때
@@ -114,10 +114,8 @@ git status --porcelain 2>/dev/null
   단계:  {step}
   저장:  {saved} ({relative time} 전)
 
-  마지막 컨텍스트:
-  ─────────────────────
+  **마지막 컨텍스트:**
   {session.md의 ## 마지막 컨텍스트 내용}
-  ─────────────────────
 
   재개 시 첫 질문:
   {session.md의 ## 재개 시 첫 질문 내용, 또는 단계에서 추론}
@@ -132,7 +130,7 @@ git status --porcelain 2>/dev/null
 미커밋 변경사항이 있으면 추가:
 ```
 ⚠️  미커밋 변경사항 있음
-  [S] git add -A && git commit -m "wip: save before resume"
+  [1] git add -A && git commit -m "wip: save before resume"
 ```
 
 ### 전체 진행 현황 (간략)
@@ -149,43 +147,43 @@ git status --porcelain 2>/dev/null
 ## 5. 재개 옵션 제시
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 재개 옵션:
 ```
 
 중단된 작업이 있으면:
 ```
-  [R] /sowhat:{command} {section}    ← 중단 지점에서 재개 (권장)
+  [1] /sowhat:{command} {section}    ← 중단 지점에서 재개 (권장)
 ```
 
 미커밋이 있으면:
 ```
-  [S] 저장 후 재개
+  [2] 저장 후 재개
 ```
 
 debate 브랜치가 있으면:
 ```
-  [M] debate/{branch} merge
-  [D] debate/{branch} delete
+  [3] debate/{branch} merge
+  [4] debate/{branch} delete
 ```
 
 기타:
 ```
-  [1] /sowhat:{next_recommended}     ← {사유}
-  [P] /sowhat:progress               ← 전체 상태 확인
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [5] /sowhat:{next_recommended}     ← {사유}
+  [6] /sowhat:progress               ← 전체 상태 확인
+----------------------------------------
 ```
 
 ---
 
 ## 6. 상호작용 처리
 
-- `[R]` 또는 "r": 중단된 커맨드 직접 실행 (컨텍스트 포함하여 재개)
-- `[S]` 또는 "s": `git add -A && git commit -m "wip: save before resume"` 실행 후 `[R]`로 진행
-- `[M]` 또는 "m": debate 브랜치 merge 안내
-- `[D]` 또는 "d": debate 브랜치 삭제 확인
-- `[P]` 또는 "p": `/sowhat:progress` 실행
-- `[1]`~`[5]`: 해당 커맨드 안내
+- `[1]`: 중단된 커맨드 직접 실행 (컨텍스트 포함하여 재개)
+- `[2]`: `git add -A && git commit -m "wip: save before resume"` 실행 후 `[1]`로 진행
+- `[3]`: debate 브랜치 merge 안내
+- `[4]`: debate 브랜치 삭제 확인
+- `[5]`: 추천 커맨드 안내
+- `[6]`: `/sowhat:progress` 실행
 
 ---
 
@@ -193,7 +191,7 @@ debate 브랜치가 있으면:
 
 사용자가 "계속", "continue", "go", "이어서" 라고만 입력했을 때:
 - session.md의 `status: in_progress` 항목을 찾으면
-- 옵션 제시 없이 바로 `[R]` 실행
+- 옵션 제시 없이 바로 `[1]` 실행
 
 ```
 {section} {step} 재개 중...
@@ -203,7 +201,7 @@ debate 브랜치가 있으면:
 
 ## 엣지 케이스
 
-- `session.md` 없음 + git log도 wip 없음: "최근 중단된 작업이 없습니다." → `[P]` /sowhat:progress로 라우팅
+- `session.md` 없음 + git log도 wip 없음: "최근 중단된 작업이 없습니다." → `[6]` /sowhat:progress로 라우팅
 - `discussing` 섹션이 여러 개: 가장 최근 수정된 것을 우선 표시
 - debate 브랜치가 여러 개: 모두 표시
 - git 없음: B, D 단계 생략

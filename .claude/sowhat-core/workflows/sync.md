@@ -112,23 +112,15 @@ date -u +"%Y-%m-%dT%H:%M:%SZ"
   - Issue #3 댓글 2개 → 02-solution.md Open Questions에 추가
   - Issue #4 body 수정 감지 → 03-scope.md GitHub Edits에 기록
 
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
+[1] 역전파된 섹션 재전개 (/sowhat:expand {section})
+[2] 전체 현황 확인 (/sowhat:progress)
+[3] 특정 필드만 수정 (/sowhat:revise {section})
 
-**{역전파 섹션}: 재전개** — 역전파된 섹션 재전개
 
-`/sowhat:expand {section}`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
-
-**또한 가능:**
-- `/sowhat:progress` — 전체 현황 확인
-- `/sowhat:revise {section}` — 특정 필드만 수정
-
----
+----------------------------------------
 ```
 
 변경이 없으면:

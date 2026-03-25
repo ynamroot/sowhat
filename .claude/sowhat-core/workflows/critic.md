@@ -177,8 +177,8 @@ minor: {N}
 - Qualifier 과대주장 → 사용자 섹션의 **Warrant** (대상의 과대주장을 논거 연결에 활용)
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 비평 완료: {N} findings (critical: {N}, major: {N}, minor: {N})
+----------------------------------------
+비평 완료: {N} findings (critical: {N}, major: {N}, minor: {N})
 
   약점 → 섹션 매핑 제안:
 
@@ -189,7 +189,7 @@ minor: {N}
   [1] 전체 주입 — 모든 제안 적용
   [2] 선택 주입 — 번호 선택 (예: W1 W3)
   [3] 주입 보류 — 리포트만 저장
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
 ```
 
 `--inject` 인자가 있으면 자동으로 [1]을 선택한다.
@@ -241,23 +241,15 @@ critic 완료 — {N} findings 발견 ({critical} critical, {major} major, {mino
   - Findings: {N} (critical: {N}, major: {N}, minor: {N})
   - 주입됨: {N}건
 
----
+----------------------------------------
+다음 액션:
 
-## ▶ 다음
+[1] 주입된 약점을 활용해 논증 전개 (/sowhat:expand {section})
+[2] 대상 논증을 debate로 공격 (/sowhat:debate {section} --stance critique)
+[3] 합의점 탐색 (/sowhat:debate {section} --stance consensus)
+----------------------------------------
 
-**섹션 강화** — 주입된 약점을 활용해 논증 전개
 
-`/sowhat:expand {section}` 또는 `/sowhat:debate {section} --stance persuade`
-
-<sub>`/clear` 후 실행 → 컨텍스트 초기화</sub>
-
----
-
-**또한 가능:**
-- `/sowhat:debate {section} --stance critique` — 대상 논증을 debate로 공격
-- `/sowhat:debate {section} --stance consensus` — 합의점 탐색
-
----
 ```
 
 ## 핵심 원칙

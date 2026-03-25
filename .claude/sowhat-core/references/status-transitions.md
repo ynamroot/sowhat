@@ -92,18 +92,17 @@ FUNCTION cascade(section_A, reason):
      RETURN  # 전파 대상 없음
 
   3. 영향 범위 표시:
-     ┌─── decision (역전파 범위) ──────────────────┐
-     │ 수정 대상: {section_A}                       │
-     │ 이유: {reason}                               │
-     │                                              │
-     │ 직접 영향: {direct_dependents 목록}           │
-     │ 간접 영향: {indirect_dependents 목록}         │
-     │                                              │
-     │ [1] 전체 역전파 (위 섹션 모두 invalidated)    │
-     │ [2] 직접 영향만 (간접은 유지)                 │
-     │ [3] 해당 섹션만 (역전파 없음)                 │
-     │ [4] 취소                                     │
-     └──────────────────────────────────────────────┘
+     **[decision]** 역전파 범위
+
+     > 수정 대상: {section_A}
+     > 이유: {reason}
+     > 직접 영향: {direct_dependents 목록}
+     > 간접 영향: {indirect_dependents 목록}
+
+     [1] 전체 역전파 (위 섹션 모두 invalidated)
+     [2] 직접 영향만 (간접은 유지)
+     [3] 해당 섹션만 (역전파 없음)
+     [4] 취소
 
   4. 인간의 선택에 따라:
      [1] → invalidate(direct + indirect)

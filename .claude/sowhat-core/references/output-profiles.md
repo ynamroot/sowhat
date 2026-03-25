@@ -284,7 +284,7 @@ export/
 │   └── gsd-prd/
 │       ├── PROJECT.md
 │       └── REQUIREMENTS.md
-├── ARGUMENT-MAP.md              # 논증 맵 (프로파일 무관)
+├── ARGUMENT-MAP.md              # 논증 맵 (/sowhat:map --export 로 생성)
 └── PRD.md                       # 레거시 호환 (기본 PRD)
 ```
 
