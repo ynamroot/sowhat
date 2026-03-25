@@ -18,6 +18,7 @@ allowed-tools:
 </objective>
 
 <execution_context>
+@.claude/sowhat-core/references/ux-standards.md
 @.claude/sowhat-core/workflows/autonomous.md
 @.claude/sowhat-core/references/strength-scoring.md
 @.claude/sowhat-core/references/source-credibility.md

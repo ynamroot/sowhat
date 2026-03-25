@@ -18,6 +18,7 @@ allowed-tools:
 </objective>
 
 <execution_context>
+@.claude/sowhat-core/references/ux-standards.md
 @.claude/sowhat-core/workflows/steelman.md
 @.claude/sowhat-core/references/toulmin-model.md
 @.claude/sowhat-core/references/strength-scoring.md

@@ -16,6 +16,7 @@ allowed-tools:
 </objective>
 
 <execution_context>
+@.claude/sowhat-core/references/ux-standards.md
 @.claude/sowhat-core/workflows/challenge.md
 @.claude/sowhat-core/references/session-protocol.md
 @.claude/sowhat-core/references/continuation-format.md

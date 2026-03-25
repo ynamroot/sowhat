@@ -15,6 +15,7 @@ allowed-tools:
 </objective>
 
 <execution_context>
+@.claude/sowhat-core/references/ux-standards.md
 @.claude/sowhat-core/workflows/spec.md
 @.claude/sowhat-core/references/session-protocol.md
 @.claude/sowhat-core/references/continuation-format.md
@@ -26,6 +27,7 @@ Arguments: $ARGUMENTS
 </context>
 
 <process>
+CRITICAL: Do NOT use AskUserQuestion tool. Present choices as text, then wait for user free-text input.
 Execute the spec workflow end-to-end.
 Preserve all workflow gates.
 </process>

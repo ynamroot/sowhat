@@ -16,6 +16,7 @@ allowed-tools:
 </objective>
 
 <execution_context>
+@.claude/sowhat-core/references/ux-standards.md
 @.claude/sowhat-core/workflows/inject.md
 @.claude/sowhat-core/references/source-credibility.md
 @.claude/sowhat-core/references/strength-scoring.md
@@ -29,6 +30,7 @@ Arguments: $ARGUMENTS
 </context>
 
 <process>
+CRITICAL: Do NOT use AskUserQuestion tool. Present choices as text, then wait for user free-text input.
 Execute the inject workflow end-to-end.
 Preserve all workflow gates.
 </process>
