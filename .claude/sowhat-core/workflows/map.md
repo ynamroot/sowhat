@@ -20,7 +20,7 @@ status_transitions: []
 ## 인자 파싱
 
 ```
-/sowhat:map [section] [--save]
+/sowhat:map [section] [--save] [--export]
 ```
 
 | 인자 | 의미 |
@@ -28,6 +28,7 @@ status_transitions: []
 | 인자 없음 | 전체 논증 흐름 맵 |
 | `{section}` (번호 또는 이름) | 해당 섹션 상세 맵 |
 | `--save` | 파일로도 저장 (`maps/overview.md` 또는 `maps/local/{name}.md`) |
+| `--export` | `export/ARGUMENT-MAP.md`로 정식 논증 맵 생성 (Toulmin 구조 전체 포함) |
 
 모드 결정: `{section}` 존재 → Local 모드, 없으면 → Global 모드
 
@@ -230,9 +231,87 @@ flowchart LR
 
 ---
 
+## `--export` 모드: ARGUMENT-MAP.md 생성
+
+`--export` 플래그가 있으면 Mermaid 다이어그램 출력에 더해 `export/ARGUMENT-MAP.md`를 생성한다.
+이 파일은 논증의 **Toulmin 구조 전체 스냅샷**으로, draft 산출물과 독립적으로 관리된다.
+
+```bash
+mkdir -p export
+date -u +"%Y-%m-%dT%H:%M:%SZ"
+```
+
+```markdown
+# Argument Map: {project}
+
+<!-- 생성: {현재 datetime} -->
+
+## Thesis
+
+**Answer**: {00-thesis.md Answer}
+
+**Qualifier**: {00-thesis.md qualifier 또는 섹션별 qualifier 종합}
+
+**SCQ**:
+- Situation: {Situation}
+- Complication: {Complication}
+- Question: {Question}
+
+## Logic Tree
+
+{각 섹션을 번호 순서대로:}
+
+### {N}-{section-name} [{status}]
+
+- **Scheme**: {scheme}
+- **Qualifier**: {qualifier}
+- **Claim**: {Claim 내용}
+- **Grounds**: {Grounds 핵심 요약 — 1-2문장}
+- **Warrant**: {Warrant 내용}
+- **Backing**: {Backing 있을 경우}
+- **Rebuttal addressed**: {Rebuttal 내용이 있으면 "예 — {요약}", 없으면 "아니오"}
+- **GitHub Issue**: {github_issue 있으면 #N, 없으면 —}
+
+---
+
+{반복}
+
+## Invalidated Arguments
+
+{status가 invalidated인 섹션 목록}
+- {N}-{section}: {무효화 사유 — Decision Log에서 추출}
+
+(없으면 이 섹션 생략)
+
+## Debate History
+
+{logs/debate/ 디렉터리가 존재하고 파일이 있으면:}
+{각 debate 파일의 핵심 결론 요약}
+
+(logs/debate/ 없거나 비어있으면 이 섹션 생략)
+
+## Research Used
+
+{research/ 디렉터리에서 status가 accepted인 파인딩:}
+- [{파일명}] {finding 핵심 — 1문장} → {관련 섹션}
+
+(없으면: "리서치 파인딩 없음")
+```
+
+```bash
+git add export/ARGUMENT-MAP.md
+git commit -m "map: export argument map snapshot"
+```
+
+**용도**: draft 산출물과 분리하여, 논증 구조 자체를 공유·아카이브·비교할 때 사용.
+프로젝트 진행 중 여러 시점에서 `--export`를 실행하면 논증 진화 과정을 추적할 수 있다.
+
+---
+
 ## 핵심 원칙
 
 - **인라인 우선** — 파일 저장이 아닌 응답 본문에 Mermaid 코드블록으로 직접 출력
 - **`--save`는 옵션** — 명시적으로 요청할 때만 파일 저장
+- **`--export`는 정식 산출물** — `export/ARGUMENT-MAP.md`로 Toulmin 전체 구조 저장
 - **명제 중심** — 노드 내용은 파일명이 아닌 실제 주장·근거·반박 문장
 - **50자 제한** — 30자보다 넓게 허용해 내용 전달력 확보

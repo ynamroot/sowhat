@@ -178,14 +178,11 @@ draft 시작 — 사전 검증 완료. 산출물 브리프 작성 대기 중.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❓ 이 {DELIVERABLE}의 목적과 목표는?
 
-──── 추천 (수정 가능) ────
-  목적: {유형별 기본 목적 제안}
-  목표: {유형별 기본 목표 제안}
-
-직접 입력하거나, Enter로 추천을 수락하세요.
-
-  목적 (왜 만드는가):
-  목표 (독자가 이걸 읽고 무엇을 하길 원하는가):
+──── 제안 ────
+  [1] 추천 수락                                                    ← 추천
+      목적: {유형별 기본 목적 제안}
+      목표: {유형별 기본 목표 제안}
+  [2] 직접 입력
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -261,10 +258,9 @@ draft 시작 — 사전 검증 완료. 산출물 브리프 작성 대기 중.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❓ 목표 분량은?
 
-  추천: {유형별 기본 단어 수} 단어 (약 {페이지 수}페이지)
-
-  직접 입력하거나 Enter로 추천 수락:
-  (예: 2000, "A4 3장", "5분 분량")
+──── 제안 ────
+  [1] 추천: {유형별 기본 단어 수} 단어 (약 {페이지 수}페이지)  ← 추천
+  [2] 직접 입력 (예: 2000, "A4 3장", "5분 분량")
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -843,6 +839,10 @@ cliffhanger=false이면 "다음 편" 라인 생략.
 
 #### 슬라이드 덱 (`slide-deck`, `pitch-deck`)
 
+슬라이드 산출물은 **2개 파일**로 분리 생성한다:
+
+**파일 1: `SLIDES.md`** — 슬라이드 내용 (발표자가 아닌 청중이 보는 화면)
+
 ```markdown
 <!-- Slide 1: Title -->
 # {제목}
@@ -867,6 +867,36 @@ cliffhanger=false이면 "다음 편" 라인 생략.
 <!-- Slide N+2: Conclusion -->
 ## {Answer}
 {CTA — 구체적 다음 단계}
+```
+
+**파일 2: `SCRIPT.md`** — 발표자 스크립트 (슬라이드별 대사 + 타이밍)
+
+```markdown
+## 발표 스크립트: {제목}
+예상 시간: {N}분
+
+### Slide 1 — Title (0:00-0:30)
+"{Situation 기반 오프닝 멘트. 청중의 관심을 잡는 질문이나 통계로 시작.}"
+
+### Slide 2 — Problem (0:30-{M}:00)
+"{Complication을 청중이 공감할 수 있게 풀어서 설명. 왜 이것이 문제인지 맥락 제공.}"
+
+### Slide 3~N — Arguments ({M}:00-{M+K}:00)
+"{KA Claim을 자연스러운 말투로. Grounds 데이터를 언급하며 시각자료를 가리킴.}"
+[전환] "{다음 슬라이드로 넘기는 브릿지 문장}"
+
+### Slide N+1 — Counter
+"물론 이런 우려도 있습니다. {Rebuttal}. 하지만 {대응}."
+
+### Slide N+2 — Conclusion
+"{Answer 재강조}. {CTA — 구체적 요청}."
+[마무리] "감사합니다. 질문 받겠습니다."
+```
+
+**Git 커밋 시 2파일 함께:**
+```bash
+git add export/generated/{profile-id}/SLIDES.md export/generated/{profile-id}/SCRIPT.md
+git commit -m "draft({profile-id}): generate slide deck + speaker script"
 ```
 
 #### 영상/팟캐스트 스크립트 (`youtube-script`, `podcast-script`)
@@ -980,9 +1010,17 @@ cliffhanger=false이면 "다음 편" 라인 생략.
 `export/generated/{profile-id}/PROJECT.md` + `export/generated/{profile-id}/REQUIREMENTS.md` 생성.
 구조는 기존 `finalize.md` 워크플로우의 산출물과 동일.
 
-### ARGUMENT-MAP.md 생성 (프로파일 무관)
+### ARGUMENT-MAP.md 생성 (독립 산출물)
 
-모든 draft 실행 시 `export/ARGUMENT-MAP.md`도 갱신 (프로파일과 무관한 공통 산출물):
+Argument Map은 **논증 구조 자체의 스냅샷**이며, 특정 독자나 채널을 위한 변환이 아니다.
+따라서 매번 자동 생성하지 않고, **명시적 요청 시에만** 갱신한다:
+
+- `--output argument-map` (레거시)
+- `--output all` (레거시)
+- deliverable로 `argument-map`을 직접 선택한 경우
+- `/sowhat:map --export` (향후 map 커맨드 확장으로 이동 예정)
+
+생성 시 `export/ARGUMENT-MAP.md`에 저장:
 
 ```markdown
 # Argument Map: {project}
@@ -1068,9 +1106,9 @@ git commit -m "draft({profile-id}): generate PRD"
 git add export/generated/{profile-id}/PROJECT.md export/generated/{profile-id}/REQUIREMENTS.md
 git commit -m "draft({profile-id}): generate GSD export"
 
-# ARGUMENT-MAP
-git add export/ARGUMENT-MAP.md
-git commit -m "draft: update argument map"
+# ARGUMENT-MAP (명시적 요청 시에만)
+# git add export/ARGUMENT-MAP.md
+# git commit -m "draft: update argument map"
 
 # config.json (프로파일 추가 시)
 git add planning/config.json
@@ -1135,7 +1173,9 @@ draft 완료 — '{profile-id}' 프로파일로 {DELIVERABLE} 생성. export/gen
   증거 깊이: Level {N} ({level_name})
 
   📄 export/generated/{profile-id}/DOCUMENT.md
-  🗺️ export/ARGUMENT-MAP.md
+  (슬라이드 산출물인 경우:)
+  📄 export/generated/{profile-id}/SLIDES.md   (슬라이드 내용)
+  📄 export/generated/{profile-id}/SCRIPT.md   (발표자 스크립트)
 
   Settled 섹션 반영: {N}개
   미반영 섹션: {M}개 ({status 이유})
@@ -1156,6 +1196,7 @@ draft 완료 — '{profile-id}' 프로파일로 {DELIVERABLE} 생성. export/gen
 
 **또한 가능:**
 - `/sowhat:draft --list` — 전체 프로파일 목록
+- `/sowhat:map --export` — 논증 구조 맵 (ARGUMENT-MAP.md) 별도 생성
 - `/sowhat:debate {section}` — 논증 추가 강화
 - `/sowhat:finalize` — GSD export 생성 + 최종 완료
 
@@ -1176,8 +1217,6 @@ draft 완료 — '{profile-id}' 프로파일로 {DELIVERABLE} 생성. export/gen
      part-2.md  "{Part 2 제목}"
      ...
      part-{N}.md "{Part N 제목}"
-
-  🗺️ export/ARGUMENT-MAP.md
 
   총 분량: 약 {총 단어 수} 단어
   Settled 섹션 반영: {N}개
