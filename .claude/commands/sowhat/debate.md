@@ -30,6 +30,7 @@ Arguments: $ARGUMENTS
 
 <process>
 CRITICAL: Do NOT use AskUserQuestion tool. Present choices as text, then wait for user free-text input.
+CRITICAL: Choices must be numbered [1] [2] [3] — NEVER use A/B/C/D. NEVER use tables for choices. Follow workflow templates exactly as written.
 Execute the debate workflow end-to-end.
 Preserve all workflow gates.
 </process>
