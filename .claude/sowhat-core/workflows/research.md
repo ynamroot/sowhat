@@ -26,7 +26,10 @@ status_transitions: []
 | 인자 | 모드 |
 |------|------|
 | `http://...` 또는 `https://...` | URL 분석 |
-| URL이 아닌 텍스트 | 토픽 검색 |
+| `file:{path}` | 로컬 파일 분석 |
+| `dir:{path}` | 폴더 내 파일 일괄 분석 |
+| `dir:{path} --glob {pattern}` | 폴더 내 특정 패턴 파일만 분석 |
+| URL이 아닌 텍스트 (`file:`/`dir:` 접두어 없음) | 토픽 검색 |
 | `review` | 미검토 파인딩 목록 |
 | `review {section}` | 특정 섹션 관련 미검토 파인딩 |
 | `accept {N}` | 파인딩 N 수용 |
@@ -97,6 +100,40 @@ status_transitions: []
 
    ## 재개 시 첫 질문
    /sowhat:research {검색어} → 토픽 검색 재시작
+   ```
+
+8. 파일 분석 모드(`$ARGUMENTS`가 `file:`로 시작)인 경우 `logs/session.md` 저장:
+   ```markdown
+   ---
+   command: research
+   section: (file)
+   step: analyzing
+   status: in_progress
+   saved: {current_datetime}
+   ---
+
+   ## 마지막 컨텍스트
+   research 파일 분석 시작 — {path} 분석 중.
+
+   ## 재개 시 첫 질문
+   /sowhat:research file:{path} → 파일 분석 재시작
+   ```
+
+9. 폴더 분석 모드(`$ARGUMENTS`가 `dir:`로 시작)인 경우 `logs/session.md` 저장:
+   ```markdown
+   ---
+   command: research
+   section: (dir)
+   step: scanning
+   status: in_progress
+   saved: {current_datetime}
+   ---
+
+   ## 마지막 컨텍스트
+   research 폴더 분석 시작 — {path} 스캔 중.
+
+   ## 재개 시 첫 질문
+   /sowhat:research dir:{path} → 폴더 분석 재시작
    ```
 
 ---
@@ -219,9 +256,96 @@ citations: []
 
 ---
 
+## 파일 분석 모드
+
+`$ARGUMENTS`가 `file:`로 시작할 때.
+
+### 1. 파일 읽기
+
+`Read`로 로컬 파일을 읽는다:
+- PDF, markdown, 텍스트, CSV, JSON 지원
+- 파일 없으면: `❌ 파일을 찾을 수 없습니다: {path}`
+
+### 2. 출처 신뢰도 판정
+
+파일 유형에 따라 Tier 판정:
+- 학술 논문 PDF → T1
+- 공식 보고서/백서 → T1~T2
+- 기술 문서/내부 자료 → T2~T3
+- 기타 → 내용 기반 판정
+
+### 3. 맥락 대조 분석
+
+URL 분석 모드와 동일 — thesis + 섹션과 대조하여 관련성, 지지/반박, Open Questions 대응 여부 분석.
+
+### 4. 파인딩 생성
+
+URL 모드와 동일한 형식으로 파인딩 파일을 생성한다.
+단, `type: file`, `source: "file:{path}"`.
+
+### 5. 제안 제시
+
+URL 모드와 동일 (Tier 표시 포함).
+
+---
+
+## 폴더 분석 모드
+
+`$ARGUMENTS`가 `dir:`로 시작할 때.
+
+### 1. 파일 목록 수집
+
+`Glob`으로 폴더 내 파일을 수집한다:
+- `--glob` 옵션 있으면 해당 패턴 사용 (예: `--glob *.pdf`)
+- 없으면 기본 패턴: `*.md`, `*.pdf`, `*.txt`, `*.csv`, `*.json`
+- 0개 → `❌ {path}에서 지원 파일을 찾지 못했습니다.`
+- 20개 초과 → `⚠️ {N}개 파일 발견. 처음 20개만 처리합니다. --glob으로 범위를 좁혀주세요.`
+
+### 2. 개별 파일 분석
+
+각 파일을 `Read`로 읽고:
+- 핵심 데이터 포인트, 주장, 통계 추출 (파일당 3~5줄 요약)
+- 파일별 Tier 판정
+
+### 3. 종합 분석
+
+여러 파일을 종합한다:
+- 중복 제거
+- 파일 간 합의점 식별 (여러 파일이 동의하는 것)
+- 파일 간 충돌점 식별 (상반되는 주장)
+- thesis + 섹션과 대조하여 관련성 분석
+
+### 4. 파인딩 생성
+
+URL 모드와 동일한 형식으로 파인딩 파일을 생성한다.
+단, `type: dir`, `source: "dir:{path} ({N}files)"`.
+
+파인딩 파일의 `## 원본 노트` 섹션에 개별 파일 목록과 각 파일 요약을 기재:
+```markdown
+## 원본 노트
+### 개별 파일 분석
+- {파일1}: {1줄 요약} (📊 {Tier})
+- {파일2}: {1줄 요약} (📊 {Tier})
+...
+
+### 통합 요약
+{전체 파일에서 추출한 핵심 주장·데이터·패턴}
+```
+
+종합 Tier는 폴더 내 파일 중 **가장 높은 Tier**를 대표 Tier로 설정한다 (inject의 보수적 접근과 달리, research는 accept/reject 게이트가 있으므로 높은 Tier 적용).
+
+### 5. 제안 제시
+
+URL 모드와 동일 (Tier 표시 포함). 파일 수를 함께 표시:
+```
+리서치 완료: {N}건 발견 (dir:{path}, {M}개 파일 분석)
+```
+
+---
+
 ## 토픽 검색 모드
 
-`$ARGUMENTS`가 URL이 아닌 텍스트일 때.
+`$ARGUMENTS`가 URL이 아닌 텍스트일 때 (`file:`/`dir:` 접두어 없음).
 
 ### 1. 웹 검색
 
