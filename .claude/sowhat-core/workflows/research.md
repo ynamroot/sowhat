@@ -30,11 +30,25 @@ status_transitions: []
 | `dir:{path}` | 폴더 내 파일 일괄 분석 |
 | `dir:{path} --glob {pattern}` | 폴더 내 특정 패턴 파일만 분석 |
 | URL이 아닌 텍스트 (`file:`/`dir:` 접두어 없음) | 토픽 검색 |
+| `--deep {토픽}` | Deep Research (Perplexity) — 토픽 심층 조사 |
+| `--deep {URL}` | Deep Research — URL 콘텐츠 검증 + 심층 조사 |
+| `--deep` (단독) | Deep Research — 자율 모드 + 심층 조사 |
 | `review` | 미검토 파인딩 목록 |
 | `review {section}` | 특정 섹션 관련 미검토 파인딩 |
 | `accept {N}` | 파인딩 N 수용 |
 | `reject {N}` | 파인딩 N 거부 |
 | (없음) | 자율 리서치 |
+
+### `--deep` 플래그 파싱
+
+`$ARGUMENTS`에서 `--deep`을 먼저 분리한다:
+- `--deep`이 있으면: `deep_mode = true`, 나머지 인자로 모드 결정
+- `--deep` 없으면: `deep_mode = false`, 기존 동작
+- `--deep` 단독이면: 자율 리서치 + Deep Research
+
+`deep_mode = true`일 때 `config.json`의 `features.deep_research`를 확인한다:
+- `"disabled"`: `⚠️ Deep Research가 비활성화되어 있습니다. config.json의 features.deep_research를 확인하세요.` → 기본 모드로 fallback
+- `"auto"` 또는 `"enabled"`: 환경변수 `PERPLEXITY_API_KEY` 확인 → 없으면 onboarding 안내 (Deep Research 모드 섹션 참조)
 
 ---
 
@@ -524,6 +538,222 @@ URL 모드와 동일 (Tier 표시 포함).
 
 ---
 
+## Deep Research 모드 (Perplexity)
+
+`--deep` 플래그가 있거나, 자율 리서치에서 `deep` 옵션 선택 시 활성화.
+Perplexity의 `sonar-deep-research` 모델을 사용하여 다단계 심층 조사를 수행한다.
+
+### 사전 조건 확인
+
+```bash
+# 1. API 키 확인
+if [ -z "$PERPLEXITY_API_KEY" ]; then
+  echo "❌ Perplexity API 키가 설정되지 않았습니다."
+  echo ""
+  echo "설정하려면: /sowhat:config api-key perplexity"
+  echo ""
+  echo "💡 Deep Research 없이 기본 웹 검색으로 진행할까요?"
+  echo "  [1] 기본 웹 검색으로 진행"
+  echo "  [2] 취소"
+fi
+
+# 2. features.deep_research 확인 (config.json)
+# "disabled"면 --deep 무시하고 기본 모드로 진행
+# "auto"면 API 키 존재 시 활성화
+# "enabled"면 API 키 필수
+```
+
+API 키 없이 `[1]` 선택 시: `--deep` 플래그를 무시하고 기존 토픽 검색 모드로 fallback.
+
+### Deep Research 실행
+
+#### 1. 검색 쿼리 구성
+
+현재 thesis + 섹션 상태를 기반으로 Perplexity에 보낼 프롬프트를 구성한다:
+
+```
+당신은 논증 구조 분석을 위한 리서치 에이전트입니다.
+
+[Thesis]: {thesis 전문}
+[현재 논증 구조]: {섹션별 Claim/Grounds 요약}
+[조사 대상]: {사용자 지정 토픽 또는 자율 분석 결과}
+
+다음을 조사해주세요:
+1. 위 주장을 뒷받침하거나 반박하는 데이터, 통계, 사례
+2. 관련 학술 연구, 산업 리포트, 공식 통계
+3. 대안적 관점이나 반론
+4. 각 출처의 원문 URL
+
+모든 수치와 데이터에는 반드시 출처 URL을 명시하세요.
+```
+
+#### 2. API 호출
+
+```bash
+curl -s https://api.perplexity.ai/chat/completions \
+  -H "Authorization: Bearer $PERPLEXITY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "{config.features.deep_research_model || sonar-deep-research}",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a thorough research analyst. Always cite sources with URLs. Provide quantitative data when available. Distinguish between primary sources (government statistics, academic papers) and secondary sources (news articles, blog posts)."
+      },
+      {
+        "role": "user",
+        "content": "{위에서 구성한 프롬프트}"
+      }
+    ]
+  }'
+```
+
+API 응답 구조:
+```json
+{
+  "choices": [{ "message": { "content": "..." } }],
+  "citations": ["https://...", "https://..."]
+}
+```
+
+API 실패 시:
+- 401: `❌ PERPLEXITY_API_KEY가 유효하지 않습니다. https://www.perplexity.ai/settings/api 에서 확인하세요.`
+- 429: `❌ API 요청 한도 초과. 잠시 후 다시 시도하세요.`
+- 기타: `❌ Perplexity API 오류 ({status}). 기본 웹 검색으로 전환할까요?`
+
+fallback 선택 시 토픽 검색 모드로 전환.
+
+#### 3. 응답 파싱 + Finding 변환
+
+Perplexity 응답을 파싱하여 기존 Finding 형식으로 변환한다:
+
+1. **응답에서 추출**:
+   - 주요 발견 사항 (numbered list)
+   - 인용된 출처 URL (`citations` 배열)
+   - 데이터 포인트 (수치, 통계)
+
+2. **출처별 Tier 판정**:
+   - `citations` 배열의 각 URL에 대해 `references/source-credibility.md` 알고리즘 적용
+   - Perplexity가 인용한 출처라고 해서 자동으로 높은 Tier를 부여하지 않음
+   - 도메인 매칭 → 콘텐츠 기반 판정 → 최종 Tier 결정
+
+3. **Finding 파일 생성**:
+   ```markdown
+   ---
+   id: {N}
+   type: deep-research
+   source: "perplexity:{모델명} — {검색 주제}"
+   tier: {종합 Tier — citations 중 최고 Tier}
+   tier_reasons:
+     - "Perplexity Deep Research 종합 결과"
+     - "{개별 citation tier 판정 이유}"
+   created: {current_datetime}
+   relevant_sections:
+     - {관련 섹션 목록}
+   status: unreviewed
+   citations:
+     - url: "{citation_url_1}"
+       tier: {T1|T2|T3|T4}
+     - url: "{citation_url_2}"
+       tier: {T1|T2|T3|T4}
+   ---
+
+   ## 출처
+   Perplexity Deep Research ({모델명}) — {검색 주제}
+   조사 시각: {datetime}
+
+   ## 주요 발견
+   1. {발견 1} — 출처: {URL} (📊 {Tier})
+   2. {발견 2} — 출처: {URL} (📊 {Tier})
+   3. {발견 3} — 출처: {URL} (📊 {Tier})
+
+   ## 섹션별 제안
+
+   ### {섹션} — {대상 영역} (Grounds / Claim / Edge Cases 등)
+   > 현재: {현재 내용 인용, 존재하면}
+
+   제안: {수정/추가 내용과 이유}
+
+   ## 인용 출처 상세
+   | # | URL | Tier | 판정 이유 |
+   |---|-----|------|-----------|
+   | 1 | {url} | {Tier} | {이유} |
+   | 2 | {url} | {Tier} | {이유} |
+
+   ## 원본 노트
+   {Perplexity 응답 전문 — 나중에 참조용}
+   ```
+
+4. **핵심 인용 검증** (선택적):
+   - Tier 판정 결과 T1/T2 출처가 있으면, `WebFetch`로 해당 URL을 직접 확인
+   - Perplexity가 인용한 수치가 원문과 일치하는지 spot-check (최대 2개)
+   - 불일치 발견 시 Finding에 `⚠️ 교차검증 필요` 태그 추가
+
+#### 4. 제안 제시
+
+기존 모드와 동일한 형식으로 인간에게 제시한다. 단, Deep Research 표시 추가:
+
+```
+🔬 Deep Research 완료: {N}건 발견 (Perplexity {모델명})
+   조사 범위: {검색 주제}
+   인용 출처: {M}개 URL
+
+[1] {발견} — {source}
+    📊 신뢰도: {Tier} ({tier_reason}) — {Grounds 사용 가능|Backing 전용|교차검증 필요}
+    관련: {섹션} — {대상 영역}
+
+[2] {발견} — {source}
+    📊 신뢰도: {Tier} ({tier_reason}) — {사용 가능 범위}
+    관련: {섹션} — {대상 영역}
+
+선택:
+  accept [번호]  → 파인딩 수용
+  reject [번호]  → 파인딩 거부
+  expand [번호]  → 해당 발견에 대해 상세 논의
+  all            → 전체 수용
+  none           → 전체 거부
+```
+
+### Deep Research + 자율 모드 결합
+
+자율 리서치 모드(`$ARGUMENTS` 없음)에서 `--deep` 플래그가 있을 때:
+
+1. 기획 상태 분석 (기존과 동일)
+2. 검색 계획 제시 시 Deep Research 옵션 표시:
+   ```
+   현재 기획 상태 분석 결과, 다음 리서치를 제안합니다:
+
+   [1] "{검색 주제 1}" 🔬 Deep Research
+       관련: {섹션} — 이유: {왜 이 검색이 필요한가}
+
+   [2] "{검색 주제 2}" 🔬 Deep Research
+       관련: {섹션} — 이유: {왜 이 검색이 필요한가}
+
+   어떤 것을 조사할까요? (all / 번호 / none)
+   ```
+3. 승인된 항목을 Deep Research로 실행 (각각 별도 API 호출)
+
+### Deep Research + 토픽 결합
+
+`/sowhat:research --deep {토픽}` 형태:
+- `{토픽}`을 Deep Research 프롬프트의 `[조사 대상]`에 삽입
+- 나머지는 위 흐름과 동일
+
+### Deep Research + URL 결합
+
+`/sowhat:research --deep {URL}` 형태:
+- 먼저 `WebFetch`로 URL 내용을 가져옴
+- 가져온 내용을 Deep Research 프롬프트에 컨텍스트로 포함:
+  ```
+  [분석 대상 콘텐츠]:
+  {WebFetch로 가져온 내용 요약}
+
+  위 콘텐츠의 주장과 데이터를 검증하고, 관련 근거를 심층 조사해주세요.
+  ```
+- URL 내용 기반 팩트체크 + 추가 근거 수집 효과
+
+---
+
 ## 핵심 원칙
 
 - **리서치는 제안이다** — 자동 반영 없음. 인간이 accept/reject
@@ -531,3 +761,4 @@ URL 모드와 동일 (Tier 표시 포함).
 - **항상 섹션에 매핑** — 떠다니는 정보 없음. 모든 발견은 섹션과 연결
 - **누적 가능** — 여러 리서치 세션의 결과가 `research/`에 축적
 - **thesis 맥락 필수** — 모든 분석은 현재 thesis를 기준으로
+- **Deep Research는 선택적** — API 키 없어도 기본 기능은 동작. 있으면 품질 향상

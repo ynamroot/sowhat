@@ -369,7 +369,7 @@ draft → discussing → settled
 
 | 커맨드 | 역할 |
 |--------|------|
-| `/sowhat:research [url\|file\|dir\|topic]` | 외부 리서치 → 섹션 수정/추가 제안. URL·파일·폴더·토픽 검색 지원 |
+| `/sowhat:research [--deep] [url\|file\|dir\|topic]` | 외부 리서치 → 섹션 수정/추가 제안. URL·파일·폴더·토픽 검색 지원. `--deep`으로 Perplexity Deep Research 활성화 (선택적) |
 | `/sowhat:inject [section] [source]` | 외부 자료를 Toulmin 필드에 직접 주입 |
 | `/sowhat:note [text\|list\|promote]` | 작업 중 아이디어 즉시 캡처 → Open Question 승격 |
 | `/sowhat:revise [section]` | settled 섹션 수정 + 오염 범위 자동 탐지. Discussion audit trail |
@@ -377,6 +377,7 @@ draft → discussing → settled
 | `/sowhat:map [section]` | Mermaid로 논증 트리 시각화 |
 | `/sowhat:progress` | 현재 상태 대시보드 + 논증 부채 추적 + 다음 액션 안내 |
 | `/sowhat:resume` | 세션 재개 (handoff.json → session.md → git log 우선순위) |
+| `/sowhat:config` | API 키·기능 토글·모델 설정. 단계적 메뉴 안내 |
 
 ---
 
@@ -668,6 +669,16 @@ progress 대시보드에서 미해결 논증 부채를 추적:
 
 Claim 선택 시 병렬 research agent를 돌려 판단 근거를 미리 제공. 근거가 부족한 섹션에서 자동 활성화.
 
+### Deep Research (research, debate, challenge)
+
+Perplexity API를 활용한 심층 리서치. `PERPLEXITY_API_KEY` 환경변수 설정 시 자동 활성화 (선택적).
+
+- **`/sowhat:research --deep {토픽}`**: Perplexity `sonar-deep-research` 모델로 다단계 심층 조사
+- **debate/challenge**: Research-Agent 스폰 시 자동으로 Deep Research 모드 적용
+- **기존 파이프라인 통합**: Finding 형식·Tier 분류·accept/reject 워크플로우 동일
+- **Graceful fallback**: API 키 없으면 기본 WebSearch로 동작, 사용자에게 설정 안내
+- **핵심 인용 검증**: Perplexity 응답의 T1/T2 출처를 WebFetch로 spot-check (최대 2개)
+
 ### Structured Handoff (session-protocol, resume)
 
 세션 종료 시 `logs/handoff.json` 생성. 미결정 사항, 논증 부채, Decision IDs 등 구조화된 정보로 resume 정확도 향상.
@@ -741,7 +752,9 @@ Claim 선택 시 병렬 research agent를 돌려 판단 근거를 미리 제공.
   "features": {
     "sub_research": "enabled",
     "sub_research_engine": "agent-browser",
-    "sub_research_fallback": "websearch"
+    "sub_research_fallback": "websearch",
+    "deep_research": "auto",
+    "deep_research_model": "sonar-deep-research"
   }
 }
 ```
@@ -749,7 +762,9 @@ Claim 선택 시 병렬 research agent를 돌려 판단 근거를 미리 제공.
 - `mode`: 진입 모드. research 모드에서 expand 시 파인딩 자동 제시 등 동작 분기
 - `research_sources`: research 모드에서 수집한 소스 목록
 - `layer`: 현재 레이어. finalize-planning 시 `planning → spec`
-- `features`: sub-research 엔진 설정
+- `features`: sub-research 엔진 설정 + Deep Research 설정
+- `features.deep_research`: `"auto"` (API 키 있으면 활성) | `"enabled"` | `"disabled"`
+- `features.deep_research_model`: Perplexity 모델 (`"sonar-deep-research"` | `"sonar-pro"` | `"sonar"`)
 
 ---
 

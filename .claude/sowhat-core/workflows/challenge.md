@@ -97,6 +97,7 @@ status_transitions: ["settled → needs-revision", "discussing → needs-revisio
 **Stage 0 — 사실 검증 (sowhat-research-agent 사용)**
 
 Stage 0은 외부 데이터 접근이 필요하므로 WebSearch/WebFetch를 가진 sowhat-research-agent를 사용한다.
+`PERPLEXITY_API_KEY` 환경변수가 존재하고 `features.deep_research`가 `"disabled"`가 아니면, `<mode>deep-research</mode>`를 추가하여 Perplexity API로 더 정확한 사실 검증을 수행한다.
 
 ```
 # Stage 0: 각 섹션의 검증 가능한 주장을 추출하고 research-agent로 검증

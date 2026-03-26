@@ -159,7 +159,8 @@ git checkout -b "$BRANCH"
 - 역할: 외부 근거 수집. **요청 시 + 자동 트리거 조건 충족 시** 활성화
 - 도구: WebSearch, WebFetch
 - 출력: Grounds 또는 Backing에 삽입 가능한 형식으로 정리
-- 한도: 라운드당 최대 3회 검색
+- 한도: 라운드당 최대 3회 검색 (Deep Research 모드에서는 Perplexity API 1회 호출로 대체)
+- Deep Research: `PERPLEXITY_API_KEY` 환경변수가 존재하고 `config.json`의 `features.deep_research`가 `"disabled"`가 아니면, `<mode>deep-research</mode>`로 스폰. 더 많은 출처와 깊은 분석 제공
 
 #### 자동 트리거 조건 (요청 없어도 활성화)
 
@@ -255,6 +256,7 @@ research_result = Task(sowhat-research-agent,
   <section>{섹션 내용}</section>
   <search_focus>{현재 섹션의 가장 약한 Grounds + Open Questions}</search_focus>
   <previous_findings>{이전 라운드에서 이미 찾은 것 — 중복 검색 방지}</previous_findings>
+  {PERPLEXITY_API_KEY 존재 && features.deep_research != "disabled" ? "<mode>deep-research</mode>" : ""}
   """)
 
 # 두 에이전트 완료 대기

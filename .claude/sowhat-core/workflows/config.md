@@ -1,0 +1,282 @@
+# /sowhat:config — sowhat 설정 관리
+
+<!--
+@metadata
+checkpoints: []
+config_reads: [features, credibility]
+config_writes: [features]
+continuation: null
+status_transitions: []
+-->
+
+사용자가 Claude Code 내부 구조(settings.json, 환경변수 등)를 몰라도 되도록 sowhat 설정을 추상화한다.
+**단계적 안내**: 항상 메뉴부터 시작 → 선택 → 입력. 사용자에게 "무엇이 가능한지"를 먼저 보여준다.
+
+## 인자 파싱
+
+`$ARGUMENTS`는 **무시한다**. 항상 대화형 메뉴부터 시작한다.
+인자가 있어도 메뉴를 건너뛰지 않는다 — 사용자가 설정 가능 항목을 한눈에 파악하는 것이 우선.
+
+---
+
+## Step 1: 메인 메뉴
+
+```
+sowhat 설정
+
+[1] API 키 관리
+[2] 기능 설정
+[3] 현재 설정 보기
+[4] 설정 초기화
+```
+
+---
+
+## Step 2-A: API 키 관리 ([1] 선택 시)
+
+### 2-A-1. 서비스 목록
+
+현재 상태를 함께 표시한다:
+
+```bash
+# 환경변수 존재 여부만 확인 (값은 표시하지 않음)
+if [ -n "$PERPLEXITY_API_KEY" ]; then
+  perplexity_status="✅ 설정됨"
+else
+  perplexity_status="❌ 미설정"
+fi
+```
+
+```
+API 키 관리
+
+[1] Perplexity ({perplexity_status})
+    Deep Research 심층 조사에 사용
+
+어떤 서비스를 설정할까요?
+```
+
+> 향후 서비스 추가 시 이 목록에 항목만 추가하면 된다.
+
+### 2-A-2. Perplexity 설정 ([1] 선택 시)
+
+이미 설정되어 있으면:
+
+```
+Perplexity API 키
+
+현재: ✅ 설정됨 (pplx-****{마지막4자})
+
+[1] 키 변경
+[2] 키 삭제
+[3] 돌아가기
+```
+
+미설정이면:
+
+```
+Perplexity API 키
+
+현재: ❌ 미설정
+발급: https://www.perplexity.ai/settings/api
+
+API 키를 입력하세요 (pplx-...):
+```
+
+### 2-A-3. 키 검증 + 저장
+
+사용자가 키를 입력하면:
+
+1. **형식 검증**: `pplx-`로 시작하는지 확인
+   - 아니면: `⚠️ Perplexity API 키는 보통 'pplx-'로 시작합니다. 이대로 진행할까요? [1] 예 [2] 다시 입력`
+
+2. **연결 검증**: 실제 API 호출로 키 유효성 확인
+   ```bash
+   response=$(curl -s -o /dev/null -w "%{http_code}" \
+     https://api.perplexity.ai/chat/completions \
+     -H "Authorization: Bearer {입력된_키}" \
+     -H "Content-Type: application/json" \
+     -d '{"model":"sonar","messages":[{"role":"user","content":"test"}]}')
+   ```
+   - `200`: 유효
+   - `401`: `❌ API 키가 유효하지 않습니다. 다시 확인해주세요.` → 재입력 안내
+   - `429`: 유효 (요청 한도 초과일 뿐 키는 정상)
+   - 기타: `⚠️ API 연결 확인 실패 ({status}). 키를 저장하고 나중에 확인할까요? [1] 저장 [2] 취소`
+
+3. **저장**: `.claude/settings.local.json`에 환경변수로 저장
+
+   `.claude/settings.local.json`을 읽고 (없으면 `{}` 기준), `env` 섹션에 추가한다:
+   ```json
+   {
+     "env": {
+       "PERPLEXITY_API_KEY": "pplx-..."
+     }
+   }
+   ```
+
+   **이미 존재하는 필드는 보존**하고 `env.PERPLEXITY_API_KEY`만 추가/업데이트한다.
+   이 파일은 `.gitignore`에 포함되어 있어 git에 커밋되지 않는다.
+
+4. **완료 안내**:
+   ```
+   ✅ Perplexity API 키 설정 완료
+
+   적용: 다음 Claude Code 세션부터 자동 적용
+   지금 바로 사용하려면 Claude Code를 재시작하세요.
+   ```
+
+### 2-A-4. 키 삭제
+
+"키 삭제" 선택 시:
+
+```
+⚠️ Perplexity API 키를 삭제합니다.
+Deep Research가 비활성화되고 기본 웹 검색이 사용됩니다.
+
+[1] 삭제
+[2] 취소
+```
+
+삭제 시 `.claude/settings.local.json`에서 `env.PERPLEXITY_API_KEY` 키를 제거한다.
+
+---
+
+## Step 2-B: 기능 설정 ([2] 선택 시)
+
+### 2-B-1. 기능 목록
+
+`planning/config.json`의 `features` 섹션을 읽고 표시한다:
+
+```
+기능 설정
+
+[1] Deep Research: {auto ✅ | enabled ✅ | disabled ❌}
+    Perplexity API로 심층 조사
+
+[2] Deep Research 모델: {sonar-deep-research}
+    사용할 Perplexity 모델
+
+[3] Sub-Research: {enabled ✅ | disabled ❌}
+    expand 중 병렬 리서치 자동 실행
+
+변경할 항목 번호를 선택하세요 (또는 'done'):
+```
+
+### 2-B-2. Deep Research 토글 ([1] 선택 시)
+
+```
+Deep Research 설정
+
+[1] auto — API 키가 있으면 자동 활성화 (권장)
+[2] enabled — 항상 활성화 (API 키 필수)
+[3] disabled — 비활성화
+
+현재: {현재값}
+```
+
+선택 시 `planning/config.json`의 `features.deep_research`를 업데이트한다.
+`enabled` 선택 시 API 키가 없으면: `⚠️ API 키가 설정되지 않았습니다. 먼저 API 키를 설정하세요.` → 메인 메뉴로 돌아가기.
+
+### 2-B-3. Deep Research 모델 변경 ([2] 선택 시)
+
+```
+Deep Research 모델
+
+[1] sonar-deep-research — 심층 조사 (느리지만 정확)
+[2] sonar-pro — 균형 (속도·품질 타협)
+[3] sonar — 기본 (빠르지만 얕음)
+
+현재: {현재값}
+```
+
+선택 시 `planning/config.json`의 `features.deep_research_model`을 업데이트한다.
+
+### 2-B-4. Sub-Research 토글 ([3] 선택 시)
+
+```
+Sub-Research 설정
+
+[1] enabled — expand 중 자동 리서치 활성화
+[2] disabled — 비활성화
+
+현재: {현재값}
+```
+
+선택 시 `planning/config.json`의 `features.sub_research`를 업데이트한다.
+
+### 2-B-5. 변경 완료
+
+각 항목 변경 후 기능 목록(2-B-1)으로 돌아간다.
+`done` 입력 시:
+
+```
+✅ 기능 설정 완료
+```
+
+---
+
+## Step 2-C: 현재 설정 보기 ([3] 선택 시)
+
+```
+sowhat 설정 현황
+
+프로젝트: {project name}
+레이어: {planning | spec | finalized}
+
+API 키:
+  Perplexity: {✅ 설정됨 (pplx-****{마지막4자}) | ❌ 미설정}
+
+기능:
+  Deep Research: {auto | enabled | disabled}
+  Deep Research 모델: {model name}
+  Sub-Research: {enabled | disabled}
+
+출처 신뢰도:
+  Strict 모드: {true | false}
+  화이트리스트: {N}개 도메인
+  블랙리스트: {N}개 도메인
+```
+
+API 키 값은 마지막 4자리만 표시한다.
+
+---
+
+## Step 2-D: 설정 초기화 ([4] 선택 시)
+
+```
+⚠️ 다음 설정을 기본값으로 초기화합니다:
+  - features (기능 토글)
+  - credibility (출처 신뢰도 커스텀 설정)
+
+API 키는 초기화되지 않습니다.
+
+[1] 초기화
+[2] 취소
+```
+
+초기화 시 `planning/config.json`의 `features`와 `credibility`를 기본값으로 복원:
+```json
+"features": {
+  "sub_research": "enabled",
+  "sub_research_engine": "agent-browser",
+  "sub_research_fallback": "websearch",
+  "deep_research": "auto",
+  "deep_research_model": "sonar-deep-research"
+},
+"credibility": {
+  "custom_whitelist": [],
+  "custom_blacklist": [],
+  "strict_mode": false
+}
+```
+
+---
+
+## 핵심 원칙
+
+- **단계적 안내** — 항상 메뉴 → 선택 → 입력. 사용자가 "무엇이 가능한지"를 먼저 본다
+- **사용자는 Claude Code 내부를 몰라도 된다** — settings.json, 환경변수 경로를 노출하지 않음
+- **API 키는 안전하게** — `.claude/settings.local.json`에 저장 (gitignored), 표시 시 마스킹
+- **검증 후 저장** — API 키는 실제 호출로 유효성 확인 후 저장
+- **기존 설정 보존** — 설정 파일의 다른 필드를 절대 덮어쓰지 않음
+- **돌아가기 가능** — 각 단계에서 상위 메뉴로 복귀 가능

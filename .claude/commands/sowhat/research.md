@@ -1,7 +1,7 @@
 ---
 name: sowhat:research
-description: 외부 리서치를 수행하고 결과를 섹션에 반영한다. "리서치", "데이터 조사", "근거 수집", "URL 분석", "파일 분석", "폴더 분석", "시장 조사", "외부 자료 찾기", "open question 해결" 등 논증에 필요한 외부 근거나 데이터가 필요할 때 사용. URL 직접 분석, 로컬 파일/폴더 분석, 토픽 검색, 자율 리서치 모드 지원.
-argument-hint: "[<url>|file:<path>|dir:<path> [--glob <pattern>]|<topic>|review|review <section>|accept <N>|reject <N>]"
+description: 외부 리서치를 수행하고 결과를 섹션에 반영한다. "리서치", "데이터 조사", "근거 수집", "URL 분석", "파일 분석", "폴더 분석", "시장 조사", "외부 자료 찾기", "open question 해결", "딥 리서치", "deep research", "심층 조사" 등 논증에 필요한 외부 근거나 데이터가 필요할 때 사용. URL 직접 분석, 로컬 파일/폴더 분석, 토픽 검색, 자율 리서치 모드 지원. --deep 플래그로 Perplexity Deep Research 활성화 (PERPLEXITY_API_KEY 필요, 선택적).
+argument-hint: "[--deep] [<url>|file:<path>|dir:<path> [--glob <pattern>]|<topic>|review|review <section>|accept <N>|reject <N>]"
 allowed-tools:
   - Read
   - Write
