@@ -206,6 +206,12 @@ settle_result = Task(sowhat-settle-agent,
     7. Open Questions 없음
     8. scheme 필드 설정
     + scheme별 추가 검증
+    9. **Stub detection** — Grounds에 구체적 출처/수치 없이 일반론만 있는지,
+       Warrant가 Claim 동어반복인지, Rebuttal이 generic한지 검사.
+       autonomous 모드에서 AI가 자동 전개하면 stub이 생기기 쉬움.
+       Stub 발견 시 검증 실패로 처리.
+    10. **Cross-section regression** — 이 섹션 settle이 기존 settled 섹션과
+        논리적으로 충돌하지 않는지 확인. 충돌 시 검증 실패로 처리.
 
     모든 검증 통과 → status: settled, 결과 반환
     검증 실패 → 실패 이유 목록 반환
@@ -394,7 +400,9 @@ challenge 결과 확인 후 /sowhat:finalize-planning 또는 /sowhat:revise {섹
 - **리포트는 파일에, 대시보드만 응답에** — 상세 로그는 `logs/` 디렉터리에 저장
 - **Human checkpoint는 최소화** — critical 이슈에서만 멈춤, 나머지는 AI가 자율 판단
 - **품질 우선** — 속도보다 논증 품질. settle 검증은 생략하지 않음
+- **Stub은 즉시 재전개** — AI 자동 전개에서 stub이 발견되면 해당 필드를 다시 채움
 - **Warrant 공격 최우선** — mini-debate에서 Warrant 연결 논리를 우선 공격
 - **강도 60 이상 목표** — 60 미만이면 추가 debate로 보강 시도
+- **Cross-section regression 검증** — settle 시 기존 섹션과의 일관성 자동 확인
 - **진행 상황 항상 저장** — 중단 시에도 `logs/session.md`에 재개 정보 보존
 - **Post-Autonomous challenge 필수** — 자율 전개 후 반드시 전체 검증 실행

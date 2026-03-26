@@ -28,7 +28,25 @@ status_transitions: []
 
 다음을 **병렬**로 수집한다:
 
-### A. session.md 파싱 (있으면)
+### A-0. handoff.json 파싱 (최우선)
+
+```bash
+cat logs/handoff.json 2>/dev/null
+```
+
+파일이 존재하면 JSON 파싱하여 구조화된 정보를 추출:
+- `last_command`, `target_section`, `stopped_at`
+- `pending_decisions`: 미결정 사항 목록
+- `active_research`: 미리뷰 리서치 파일 목록
+- `verification_debt`: 논증 부채 요약
+- `notes_pending`: 미처리 노트 수
+- `next_action`: 다음 권장 커맨드
+- `decision_ids`: 이전 세션 Decision ID 목록
+
+handoff.json이 있고 `stopped_at`이 `"complete"`이면 → 이전 작업은 정상 완료, `next_action`을 권장
+handoff.json이 있고 `stopped_at`이 step 이름이면 → 중단된 작업, 해당 지점에서 재개
+
+### A. session.md 파싱 (handoff.json 없을 때)
 
 ```bash
 cat logs/session.md 2>/dev/null
@@ -81,10 +99,11 @@ git status --porcelain 2>/dev/null
 
 ### 우선순위
 
-1. `session.md`의 `status: in_progress` → 가장 정확한 정보
-2. git log의 미완성 wip 커밋
-3. `discussing` 상태 섹션 (expand 또는 spec 핑퐁 중단)
-4. 열린 debate 브랜치 (debate 중단)
+1. `handoff.json` → 가장 구조화된 정보 (존재하면 최우선)
+2. `session.md`의 `status: in_progress` → 정확한 컨텍스트 정보
+3. git log의 미완성 wip 커밋
+4. `discussing` 상태 섹션 (expand 또는 spec 핑퐁 중단)
+5. 열린 debate 브랜치 (debate 중단)
 
 ### 재개 컨텍스트 구성
 
@@ -276,9 +295,34 @@ config.json status와 섹션 파일 status가 다른 경우:
 
 ---
 
+### handoff.json 있을 때 추가 출력
+
+handoff.json이 존재하면 중단 지점 출력에 다음을 추가한다:
+
+```
+📋 세션 핸드오프 정보
+
+  미결정 사항: {pending_decisions 수}건
+  {있으면: - {decision 설명}}
+
+  미처리 리서치: {active_research 수}건
+  {있으면: - {파일명}}
+
+  논증 부채: {verification_debt 합계}건
+  {있으면: - challenge 미수정: {N}건}
+  {있으면: - stub 의심: {N}건}
+
+  미처리 노트: {notes_pending}건
+
+  이전 세션 Decision IDs: {decision_ids 수}건
+```
+
+---
+
 ## 핵심 원칙
 
-- **session.md가 있으면 무조건 우선** — 가장 정확한 컨텍스트
+- **handoff.json > session.md > git log** — 구조화된 정보가 우선
+- **session.md가 있으면 무조건 우선** — 가장 정확한 컨텍스트 (handoff.json 없을 때)
 - **없으면 파일 상태 + git log로 추론** — 최선을 다해 복구
 - **추론 불확실하면 명시** — "어떤 단계에서 멈췄는지 정확히 알 수 없습니다. 섹션 상태를 보면 {step}까지 완료된 것으로 보입니다."
 - **progress와 중복하지 않는다** — 전체 대시보드는 /sowhat:progress에 위임

@@ -55,6 +55,65 @@ status_transitions: ["discussing → settled"]
 6. **Rebuttal 처리 여부** — 반론이 addressed되었거나 Open Question으로 명시되어 있는가?
 7. **Open Questions** — 미해결 항목이 있으면 거부
 8. **scheme 필드** — 설정되어 있어야 함
+9. **Stub detection** — Toulmin 필드가 형식만 채워져 있고 실질 내용이 없는 "논증 stub"을 탐지. 거부
+10. **Cross-section regression** — 이 섹션을 settle함으로써 기존 settled 섹션과의 논증 일관성이 깨지는지 검증. 충돌 시 경고
+
+### Stub Detection (논증 빈 껍데기 탐지)
+
+Toulmin 필드가 형식만 갖추고 실질 내용이 없는 "stub"을 탐지한다. AI 자동 전개(autonomous)에서 특히 빈번.
+
+**탐지 패턴:**
+
+| 필드 | Stub 판정 기준 | 예시 |
+|------|---------------|------|
+| Grounds | 구체적 출처/수치/사례 없이 일반론만 서술 | "다양한 연구에서 확인됨", "여러 전문가가 동의" |
+| Warrant | Claim을 단순 반복하거나 동어반복 | Claim="시장이 크다" + Warrant="시장이 크기 때문에" |
+| Backing | 구체적 출처/근거 없이 권위 호소만 | "업계 전문가 의견", "일반적으로 알려진 사실" |
+| Rebuttal | 구체적 반론 미제시 + 대응 없음 | "반론이 있을 수 있으나 극복 가능", "큰 문제 없음" |
+| Qualifier | 근거 강도와 무관한 최고 수준 설정 | Grounds 1건 + definitely |
+
+**탐지 방법:**
+1. 각 필드를 읽고 위 패턴에 해당하는지 검사
+2. Grounds에 T1/T2 출처명, 수치, 연도, 사례명 등 구체적 식별자가 하나도 없으면 stub 의심
+3. Warrant가 Claim의 키워드를 80% 이상 반복하면 동어반복 stub
+4. Rebuttal에 구체적 반론 명제가 없으면 stub (대응만 있고 반론 자체가 generic)
+
+**검증 결과:**
+- stub 발견 → `❌ Stub 탐지: {필드} — {이유}` → settle 거부
+- 경계 사례(stub 의심) → `⚠️ Stub 의심: {필드} — {이유}` → 경고 (거부 아님)
+
+---
+
+### Cross-Section Regression Gate
+
+이 섹션을 settle함으로써 기존 settled 섹션과의 논증 일관성이 깨지는지 검증한다.
+
+**검증 대상:**
+1. **Claim 충돌**: 이 섹션의 Claim이 다른 settled 섹션의 Claim과 모순되지 않는가?
+2. **Grounds 의존 깨짐**: 다른 settled 섹션의 Grounds가 이 섹션의 Claim을 전제로 하는 경우, 전제가 여전히 유효한가?
+3. **thesis 정합성**: 이 섹션을 포함한 전체 settled 섹션의 Claim이 thesis Answer를 논리적으로 지지하는가?
+
+**검증 방법:**
+1. 모든 settled 섹션의 Claim + Grounds + Warrant를 로드
+2. 이 섹션의 Claim과 각 settled 섹션의 Claim 간 논리적 모순/충돌 검사
+3. 이 섹션을 인용하는 다른 섹션의 Grounds 텍스트에서 전제 유효성 확인
+4. thesis Answer → Key Arguments → 각 섹션 Claim의 논리 체인 검증
+
+**검증 결과:**
+- 충돌 없음 → 조용히 통과 (표시 없음)
+- 충돌 발견 → 경고 출력 (settle 거부는 아님, verify-argument checkpoint에서 인간이 판단):
+  ```
+  ⚠️ Cross-section regression 감지
+
+  {N}-{section}의 Claim과 충돌:
+    이 섹션: "{this claim}"
+    {N}-{section}: "{other claim}"
+    충돌: {충돌 설명}
+
+  [영향받는 섹션]: {section list}
+  ```
+
+---
 
 ### Scheme별 추가 검증
 
@@ -234,3 +293,5 @@ settle 완료 — {N}-{section} settled 전환. Claim: {claim 한 줄}
 - **검증은 Claude가 한다** — 논리적 정합성 + Toulmin 구조 완결성을 확인한다
 - **검증 실패 시 거부** — 무엇을 해소해야 하는지 명시한다
 - **Warrant "Implicit"은 경고** — 거부까지는 아니지만 약한 논증임을 표시한다
+- **Stub은 거부한다** — 형식만 채운 빈 껍데기 논증은 settle 불가
+- **Regression은 경고한다** — 기존 settled 섹션과 충돌하면 인간이 판단

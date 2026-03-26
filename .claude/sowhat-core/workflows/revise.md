@@ -273,6 +273,31 @@ config.json, 00-thesis.md 체크박스 해제 (해당되는 경우) 업데이트
 
 ---
 
+## Discussion Audit Trail (Revise)
+
+수정 과정을 구조화된 로그로 남긴다.
+
+### 저장 위치
+
+`logs/discussion/{section}-revise-{YYYYMMDD-HHMM}.md`
+
+### 형식
+
+```markdown
+# Revise Discussion Log: {section}
+
+## Revision ({datetime})
+- Decision ID: D-{section}-{seq}
+- Field: {수정된 필드}
+- Before: {이전 내용 요약}
+- After: {새 내용 요약}
+- Reason: {사용자가 제시한 수정 이유}
+- Pollution detected: {오염 섹션 목록 | 없음}
+- Pollution action: {invalidate | manual review | ignored}
+```
+
+---
+
 ## 핵심 원칙
 
 - **수정은 대화로** — 필드 내용을 대화로 받아 Claude가 직접 파일에 반영
@@ -280,3 +305,5 @@ config.json, 00-thesis.md 체크박스 해제 (해당되는 경우) 업데이트
 - **스코프 challenge** — 전체가 아닌 영향 범위만 검증해 비용 최소화
 - **오염 범위 명시** — 어떤 섹션이 왜 영향받는지 사용자에게 투명하게 표시
 - **처리 방식은 사용자가 결정** — 자동 invalidate vs 수동 검토 선택권 부여
+- **Discussion audit trail 필수** — 모든 수정 과정을 `logs/discussion/`에 기록
+- **Decision ID 부여** — 수정 결정마다 ID를 부여하여 추적 가능

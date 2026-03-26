@@ -789,6 +789,118 @@ saved: {current_datetime}
 
 ---
 
+## Discussion Audit Trail
+
+expand 핑퐁 과정을 구조화된 로그로 남긴다. resume 정확도 향상과 revise 시 원래 논의 맥락 참조를 위함.
+
+### 저장 위치
+
+`logs/discussion/{section}-expand.md`
+
+### 저장 시점
+
+**각 스텝 완료 시** 해당 라운드를 append한다 (session.md와 달리 append 모드).
+
+### 형식
+
+```markdown
+# Discussion Log: {section}
+
+## Round {N}: {Step name} ({datetime})
+- Claude 제안: {제안 내용 요약}
+- 사용자 선택/수정: {선택한 옵션 또는 직접 입력 요약}
+- 결정: {최종 반영 내용}
+- Decision ID: D-{section_number}-{sequence}
+```
+
+### Decision ID 부여 규칙
+
+expand 핑퐁에서 사용자가 내린 모든 결정에 고유 ID를 부여한다.
+
+- 형식: `D-{section_number}-{3자리 시퀀스}` (예: `D-02-001`, `D-02-002`)
+- 시퀀스는 해당 섹션 내에서 순차 증가
+- Decision ID는 섹션 파일의 `## Decision Log` 테이블과 discussion log 양쪽에 기록
+
+### 섹션 파일 Decision Log 업데이트
+
+```markdown
+## Decision Log
+| v | Decision ID | 변경 내용 | 이유 | 날짜 |
+|---|-------------|---------|------|------|
+| 1 | D-02-001 | stasis: 사실 주장 | 시장 데이터 기반 논증 | {date} |
+| 1 | D-02-002 | scheme: statistics | 수치 데이터 중심 | {date} |
+| 1 | D-02-003 | claim: "SaaS 시장 28% 성장" | 사용자 직접 작성 | {date} |
+```
+
+### settle/challenge에서의 활용
+
+- **settle**: verify-argument checkpoint에서 Decision ID 목록을 참조하여 각 결정의 근거 추적 가능
+- **challenge**: 공격 리포트에서 관련 Decision ID를 명시하여 "어떤 결정이 취약점의 원인인가" 추적
+
+  ```
+  [challenge Stage 3: Warrant 유효성]
+  ⚠️ D-02-005 (Warrant 선택) 검토 결과:
+    Warrant가 Grounds→Claim을 충분히 연결하지 못함
+    Decision context: "사용자가 [5] Implicit 선택"
+  ```
+
+---
+
+## Advisor Mode (expand 스텝 3 Claim 선택 시)
+
+사용자가 Claim 방향을 결정해야 할 때, 병렬로 research agent를 돌려서 판단 근거를 미리 제공한다.
+
+### 활성화 조건
+
+- `research/` 디렉터리에 해당 섹션 관련 파인딩이 2건 미만일 때
+- 또는 Claim 선택지가 2개 이상이고 방향이 크게 다를 때
+
+### 동작
+
+스텝 3 Claim 선택지를 구성할 때:
+
+1. 각 Claim 후보에 대해 sowhat-research-agent를 병렬로 스폰 (WebSearch):
+   ```
+   Task(sowhat-research-agent,
+     prompt = """
+     <claim_candidate>{Claim 후보}</claim_candidate>
+     <thesis>{thesis_answer}</thesis>
+     <section_context>{thesis_argument, stasis, scheme}</section_context>
+     <instructions>
+       이 Claim을 지지하는 근거를 빠르게 검색하라.
+       최대 2건의 핵심 근거만 반환.
+       검색 시간 제한: 30초.
+     </instructions>
+     """)
+   ```
+
+2. 결과를 Claim 선택지에 인라인으로 표시:
+   ```
+   > [expand {section} > 스텝 3/9 Claim]
+   > Thesis: "{Answer 40자}"
+
+   ❓ 이 섹션의 핵심 주장(Claim)은 무엇입니까?
+
+     [1] {Claim 후보 1}
+         → 근거 발견: {research result 요약} (T2, 2024)
+
+     [2] {Claim 후보 2}
+         → 근거 발견: {research result 요약} (T1, 2023)
+
+     [3] {Claim 후보 3}
+         → 근거 미발견 ⚠️
+
+     [4] 직접 작성
+     [5] 잘 모르겠다 → Open Question 등록
+   ```
+
+### 비활성화
+
+- `research/` 디렉터리에 해당 섹션 관련 파인딩이 이미 충분하면 (3건 이상) advisor 생략
+- 사용자가 `--no-advisor` 옵션을 사용하면 생략
+
+---
+
 ## 종료 조건
 
 인간이 충분하다고 판단하면 핑퐁을 종료한다.
@@ -843,3 +955,6 @@ git commit -m "expand({section}): complete toulmin structure"
 - **항상 thesis와의 연결을 확인한다** — 모든 필드는 thesis Answer로 거슬러 올라간다
 - **Warrant는 생략 불가** — Implicit Warrant는 경고 후 계속 가능하나 위험함을 고지
 - **각 스텝 완료마다 커밋** — 작업 손실 방지
+- **Discussion audit trail 필수** — 모든 핑퐁 라운드를 `logs/discussion/`에 기록
+- **Decision ID 부여** — 사용자 결정마다 D-{section}-{seq} ID를 부여하여 settle/challenge에서 추적 가능
+- **Advisor mode** — Claim 선택 시 병렬 리서치로 판단 근거를 미리 제공 (근거 부족할 때)

@@ -776,6 +776,44 @@ outcome에 따라 다음 안내를 표시한다:
 
 ---
 
+## Discussion Audit Trail (Debate)
+
+debate 라운드 교환 내용을 구조화된 로그로 남긴다.
+
+### 저장 위치
+
+`logs/discussion/{section}-debate-{YYYYMMDD-HHMM}.md`
+
+### 저장 시점
+
+각 라운드 완료 후 append.
+
+### 형식
+
+```markdown
+# Debate Discussion Log: {section}
+Branch: {branch_name}
+
+## Round {N} ({datetime})
+- Con 공격: {공격 유형} — {공격 요약}
+- Pro 방어: {방어 방식} — {방어 요약}
+- Research: {리서치 결과 요약 | 미실행}
+- 판정: {outcome}
+- 인간 결정: {승인/판정 변경/중단} (Decision ID: D-{section}-{seq})
+- 섹션 변경: {변경된 필드 목록}
+```
+
+### Decision ID
+
+debate에서 인간이 내리는 결정에도 Decision ID를 부여한다:
+- 라운드 판정 승인/변경 시
+- Post-debate merge/cherry-pick/보류/삭제 결정 시
+- thesis-threatened 에스컬레이션 결정 시
+
+ID는 섹션 파일의 `## Decision Log`와 debate discussion log 양쪽에 기록한다.
+
+---
+
 ## 핵심 원칙
 
 - **Warrant 취약점 우선** — Con-Agent는 항상 Warrant Non-sequitur/Missing link/Circular 먼저 점검
@@ -788,3 +826,5 @@ outcome에 따라 다음 안내를 표시한다:
 - **브랜치는 인간이 결정한다** — 자동 merge 없음
 - **Thesis 위기는 즉시 PAUSE** — 임의로 처리하지 않는다
 - **에스컬레이션은 단계적** — Claim → Key Argument → Thesis 순서 준수
+- **Discussion audit trail 필수** — 모든 라운드를 `logs/discussion/`에 기록
+- **Decision ID 부여** — 인간 결정마다 ID를 부여하여 추적 가능

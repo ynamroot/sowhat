@@ -51,10 +51,69 @@ Workflows may add extra frontmatter fields beyond the base schema:
 | `sub_research_pending` | expand | `true` if Sub-Research agent was triggered and results are pending |
 | `checkpoint_type` | settle, challenge | `verify-argument`, `decision`, or `human-input` when status is `awaiting_checkpoint` |
 
+## Structured Handoff (세션 종료 시)
+
+세션 종료(complete) 시 `logs/handoff.json`을 machine-readable로 생성한다. resume의 복원 정확도를 높이기 위한 보조 파일.
+
+### 생성 시점
+
+- `session.md`의 `status: complete`로 업데이트하는 시점에 함께 생성
+- `status: in_progress`인 상태에서 세션이 끊기면 생성되지 않음 (session.md + git log fallback 사용)
+
+### 형식
+
+```json
+{
+  "last_command": "expand",
+  "target_section": "02-market",
+  "stopped_at": "complete",
+  "completed_fields": ["stasis", "scheme", "claim", "grounds", "warrant", "qualifier", "rebuttal"],
+  "pending_decisions": [],
+  "active_research": [],
+  "open_questions_count": 0,
+  "verification_debt": {
+    "challenge_unresolved": 0,
+    "stub_suspects": 0,
+    "debate_weakened": 0
+  },
+  "notes_pending": 2,
+  "next_action": "/sowhat:settle 02-market",
+  "decision_ids": ["D-02-001", "D-02-002", "D-02-003"],
+  "saved": "2026-03-26T10:30:00Z"
+}
+```
+
+### 필드 설명
+
+| 필드 | 설명 |
+|------|------|
+| `last_command` | 마지막 실행 커맨드 |
+| `target_section` | 작업 대상 섹션 |
+| `stopped_at` | 중단 지점 (step name 또는 "complete") |
+| `completed_fields` | 이 세션에서 완료된 Toulmin 필드 목록 |
+| `pending_decisions` | 미결정 사항 (Decision ID + 설명) |
+| `active_research` | 미리뷰 대기 중인 research finding 파일 목록 |
+| `open_questions_count` | 현재 섹션의 미해결 Open Questions 수 |
+| `verification_debt` | 논증 부채 요약 |
+| `notes_pending` | 미처리 노트 수 |
+| `next_action` | 다음 권장 커맨드 |
+| `decision_ids` | 이 세션에서 생성된 Decision ID 목록 |
+| `saved` | 생성 시각 (ISO 8601) |
+
+### resume에서의 활용
+
+`/sowhat:resume` 실행 시 `logs/handoff.json`이 존재하면:
+1. `session.md`보다 **handoff.json을 우선** 참조 (더 구조화된 정보)
+2. `pending_decisions`, `active_research`, `verification_debt`를 기반으로 정확한 재개 지점 결정
+3. `decision_ids`를 사용하여 이전 세션의 결정 맥락 복원
+
+---
+
 ## Rules
 
 - Always overwrite (not append) — session.md is a single-slot checkpoint
 - `saved` field MUST use real system time: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
 - Update step field as workflow progresses through major stages
-- Commands that are read-only (progress, map, resume) do NOT need session.md saves
-- session.md is the primary input for `/sowhat:resume`
+- Commands that are read-only (progress, map, resume, note) do NOT need session.md saves
+- session.md is the primary input for `/sowhat:resume`, handoff.json is supplementary
+- handoff.json is generated at command completion, not during execution
