@@ -16,6 +16,52 @@
 
 ---
 
+## 출처 계층 (Source Layer)
+
+Tier(신뢰도 등급)와 별도로, 출처가 데이터의 **원본 생산자인지 가공/보도자인지**를 구분한다.
+이 구분은 Stage 0(사실 검증)에서 1차 출처 역추적 여부를 결정하는 데 사용된다.
+
+| 계층 | 정의 | 예시 | 정량 데이터 인용 시 |
+|------|------|------|---------------------|
+| **Primary** | 데이터 원본 생산자. 직접 수집·측정·공시한 주체 | 통계청 KOSIS, 한국은행 경제통계시스템, 실거래가 공개시스템, 금감원 DART, 국토교통부 고시, Census Bureau, BLS, SEC EDGAR | 그대로 인용 가능 |
+| **Secondary** | 원본 데이터를 가공·분석·보도. 원본을 해석하여 전달 | 뉴스 기사, 산업 리포트, 분석 블로그, 학술 리뷰 논문 | 1차 출처 교차검증 권고 |
+
+### 판정 규칙
+
+```
+FUNCTION classify_source_layer(source_url, source_content):
+
+  1. Primary 패턴 매칭:
+     - 정부 통계 포탈: kosis.kr, kostat.go.kr, data.go.kr, census.gov, bls.gov
+     - 공식 DB: rt.molit.go.kr (실거래가), dart.fss.or.kr, sec.gov/edgar
+     - 중앙은행: bok.or.kr, federalreserve.gov, ecb.europa.eu
+     - 국제기구 데이터: data.worldbank.org, stats.oecd.org
+     - 학술 원저: 직접 실험/조사한 논문 (review/meta-analysis 제외)
+     매칭 → Primary
+
+  2. Secondary 판정:
+     - 위 패턴 미매칭 + 콘텐츠가 다른 출처의 데이터를 인용/분석
+     - 뉴스 기사에서 "~에 따르면", "~가 발표한 자료에 의하면" 표현 포함
+     → Secondary
+
+  RETURN { layer: "Primary" | "Secondary" }
+```
+
+### Tier × Layer 조합 가이드
+
+| Tier | Layer | 정량 데이터 인용 | 정성적 주장 인용 |
+|------|-------|:---:|:---:|
+| T1 | Primary | ✅ 최고 신뢰 | ✅ |
+| T1 | Secondary | ✅ (1차 출처 확인 권고) | ✅ |
+| T2 | Primary | ✅ (기업 IR 등) | ✅ |
+| T2 | Secondary | ⚠️ 1차 출처 교차검증 필요 (정량 데이터) | ✅ |
+| T3 | Secondary | ❌ 교차검증 없이 단독 사용 불가 | ⚠️ 조건부 |
+| T4 | Secondary | ❌ | ❌ Backing 전용 |
+
+> **핵심 원칙**: 정량 데이터를 2차 출처에서 인용할 때는, 해당 수치의 1차 출처를 확인하는 것이 기본이다. 뉴스 헤드라인의 수치를 그대로 Grounds에 넣지 않는다.
+
+---
+
 ## Tier 판정 알고리즘
 
 ```

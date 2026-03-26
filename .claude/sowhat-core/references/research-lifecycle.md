@@ -102,6 +102,47 @@ citations: []
 3. config.json `research.unreviewed` 감소
 4. argument-log.md에 기록
 
+### 자동 Diff 감지 (Accept 시)
+
+파인딩 accept 시, 관련 섹션의 기존 Grounds와 파인딩 내용을 자동 비교한다:
+
+```
+FUNCTION auto_diff_on_accept(finding, sections):
+
+  FOR EACH section_id IN finding.relevant_sections:
+    section = load(section_id)
+
+    # 파인딩의 데이터 포인트와 섹션 Grounds의 데이터 포인트를 대조
+    finding_data = extract_data_points(finding.content)
+    section_data = extract_data_points(section.grounds)
+
+    conflicts = compare(finding_data, section_data)
+
+    IF conflicts.length > 0:
+      FOR EACH conflict IN conflicts:
+        DISPLAY:
+          ⚠️ 수치/사실 불일치 감지
+            데이터: {conflict.label}
+            파인딩 값: {conflict.finding_value} (출처: {finding.source})
+            섹션 값:  {conflict.section_value}
+
+          [1] 섹션을 파인딩 값으로 수정 → /sowhat:revise {section_id} 자동 트리거
+          [2] 파인딩 기각 (섹션 값이 맞음)
+          [3] 양쪽 모두 추가 검증 필요
+
+      # [1] 선택 시:
+      #   - 해당 Ground의 값을 파인딩 값으로 교체
+      #   - finding.status = "applied"
+      #   - 오염 범위 자동 탐지 (revise 흐름)
+      #   - argument-log.md에 기록
+
+    ELSE:
+      # 불일치 없음 — 정상 accept 진행
+      PASS
+```
+
+> **원칙**: 리서치에서 발견한 수치가 섹션과 다르면 반드시 인간에게 알린다. "대략 맞음"으로 넘어가지 않는다.
+
 ### 반영 (Application)
 
 accepted 파인딩이 실제로 섹션에 반영되면:
