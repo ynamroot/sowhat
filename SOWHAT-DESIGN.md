@@ -79,13 +79,24 @@ Layer 1: Toulmin Model (기본 단위)
 
 ---
 
-## Content-Critique 모드
+## 진입 모드
 
-sowhat은 두 가지 모드를 지원한다.
+sowhat은 세 가지 진입 모드를 지원한다.
+
+```
+                          sowhat init
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+     init (기본)        init --from         init --research
+     Top-Down            비평/반박           Bottom-Up
+     아이디어 →          콘텐츠 →            자료 수집 →
+     thesis              입장 선택            근거에서 thesis 도출
+```
 
 ### idea 모드 (기본)
 
-사용자의 아이디어에서 시작하여 논증을 구축한다. 기존 동작.
+사용자의 아이디어에서 시작하여 논증을 구축한다. Top-down.
 
 ### content-critique 모드 (`--from`)
 
@@ -108,7 +119,35 @@ sowhat은 두 가지 모드를 지원한다.
   → consensus: 양측 통합 제안 vs 피상성 공격
 ```
 
-config.json 추가 필드: `mode`, `source` (config-schema.md 참조)
+### research 모드 (`--research`)
+
+자료를 먼저 수집·분석하여 근거로부터 thesis를 bottom-up으로 도출한다. "자료는 있는데 뭘 주장해야 할지 모르겠다"는 상황에 적합.
+
+```
+/sowhat:init --research
+  → R-1 자료 수집 (URL, 파일, 폴더, 토픽 검색 — 대화형, 혼합 가능)
+  → R-2 자료 분석 (각 소스 Tier 판정 + 데이터 포인트 추출)
+  → R-3 종합 (합의점/충돌점/패턴/갭 → research/SYNTHESIS.md)
+  → R-4A 종합 결과 제시 (사실만, thesis 없이)
+  → R-4B 인간 인사이트 주입 (직감, 경험, 가설 — 자료와 충돌해도 OK)
+  → R-4C Thesis 후보 제안 (근거 + 인사이트 결합, 근거 강도 바 표시)
+  → R-5 Key Arguments 자동 매핑 (파인딩 → 논거 클러스터링)
+  → R-6 역 SCQ (Answer에서 Situation/Complication/Question 역도출)
+  → 이후 기존 흐름 합류 (expand 시 매핑된 파인딩 Grounds 자동 제시)
+```
+
+**`--auto` 옵션**: 소스 수집만 대화형, 나머지 전체 자동:
+
+```
+/sowhat:init --research --auto [--profile <type>]
+  → [인간] 소스 수집 → 수집 완료
+  → [자동] 분석 → 종합 → thesis 자동 선택 → autonomous → challenge → draft
+  → 완료: drafts/{filename}
+```
+
+critical checkpoint(thesis 방향 변경, claim broken 등)에서만 일시정지.
+
+config.json 추가 필드: `mode` ("idea" | "content-critique" | "research"), `source`, `research_sources` (config-schema.md 참조)
 
 ---
 
@@ -123,6 +162,7 @@ config.json 추가 필드: `mode`, `source` (config-schema.md 참조)
 │   └── config.json                   ← 상태 추적
 ├── research/
 │   ├── log.md                        ← 리서치 타임라인 (append-only)
+│   ├── SYNTHESIS.md                  ← research 모드 종합 결과
 │   ├── 001-{slug}.md                 ← 개별 파인딩
 │   └── ...
 ├── maps/
@@ -134,8 +174,14 @@ config.json 추가 필드: `mode`, `source` (config-schema.md 참조)
 │   └── debate/
 │       └── debate-{section}-r{N}.excalidraw
 ├── logs/
-│   ├── session-{YYYYMMDD-HHMM}.md   ← 세션별 기록
+│   ├── session.md                    ← 단일 슬롯 체크포인트 (덮어쓰기)
+│   ├── handoff.json                  ← 구조화된 세션 핸드오프
 │   ├── argument-log.md               ← append-only 논증 이력
+│   ├── notes.md                      ← /sowhat:note 아이디어 메모
+│   ├── discussion/                   ← 핑퐁/라운드 구조화 로그
+│   │   ├── {section}-expand.md
+│   │   ├── {section}-debate-{datetime}.md
+│   │   └── {section}-revise-{datetime}.md
 │   └── debate/
 │       └── {section}-round-{N}.md
 ├── [기획 레이어]
@@ -291,9 +337,12 @@ draft → discussing → settled
 | 커맨드 | 역할 |
 |--------|------|
 | `/sowhat:init` | repo 생성 + GitHub 연결 + IBIS Issue 프레이밍 + thesis 핑퐁 |
-| `/sowhat:expand [section]` | 섹션 bottom-up 전개 (핑퐁) |
-| `/sowhat:settle [section]` | 완료 선언 → Git commit + Issue close |
-| `/sowhat:challenge` | 전체 트리 공격 (thesis 우선 → 민토) |
+| `/sowhat:init --from` | 외부 콘텐츠 분석 → 입장 구축 (content-critique 모드) |
+| `/sowhat:init --research` | 자료 수집·분석 → 근거 기반 thesis 도출 (bottom-up) |
+| `/sowhat:init --research --auto` | 소스 수집 후 draft까지 완전 자동 |
+| `/sowhat:expand [section]` | 섹션 bottom-up 전개 (핑퐁). Advisor mode + Discussion audit trail |
+| `/sowhat:settle [section]` | 완료 선언 → Stub detection + Cross-section regression + Git commit + Issue close |
+| `/sowhat:challenge` | 전체 트리 공격 (thesis 우선 → 민토) + Decision ID 추적 |
 | `/sowhat:finalize-planning` | 게이트 통과 + 명세 레이어 초안 자동 생성 |
 
 ### 명세 레이어
@@ -309,47 +358,67 @@ draft → discussing → settled
 
 | 커맨드 | 역할 |
 |--------|------|
-| `/sowhat:debate [section]` | Git branch 기반 변증법적 토론 루프. `--stance` 옵션으로 설득/합의/비평 모드 선택 |
+| `/sowhat:debate [section]` | Git branch 기반 변증법적 토론 루프. `--stance` 옵션으로 설득/합의/비평 모드 선택. Discussion audit trail |
+| `/sowhat:steelman` | 현재 논증의 최강 반대 논증 트리 자동 생성 |
+| `/sowhat:branch [section]` | 섹션의 대안적 논증 경로 생성·비교 |
 | `/sowhat:critic` | 대상 콘텐츠 5차원 비평 (content-critique 모드 전용) |
-| `/sowhat:draft [type]` | 인간용 문서 합성 (DOCUMENT.md / PRD.md / ARGUMENT-MAP.md) |
+| `/sowhat:autonomous` | 모든 미완성 섹션 자동 전개·검증·확정. Stub detection 내장 |
+| `/sowhat:draft [type]` | 인간용 문서 합성. 민토 피라미드 기반 구조 + 프로파일 시스템 |
 
 ### 인프라
 
 | 커맨드 | 역할 |
 |--------|------|
-| `/sowhat:research [url\|topic]` | 외부 리서치 → 섹션 수정/추가 제안 |
-| `/sowhat:sync` | GitHub 변경 감지 → 로컬 반영 (hook 자동 실행) |
-| `/sowhat:map [section]` | Excalidraw로 논증 트리 시각화 |
-| `/sowhat:progress` | 세션 재개 + 현재 상태 확인 |
+| `/sowhat:research [url\|file\|dir\|topic]` | 외부 리서치 → 섹션 수정/추가 제안. URL·파일·폴더·토픽 검색 지원 |
+| `/sowhat:inject [section] [source]` | 외부 자료를 Toulmin 필드에 직접 주입 |
+| `/sowhat:note [text\|list\|promote]` | 작업 중 아이디어 즉시 캡처 → Open Question 승격 |
+| `/sowhat:revise [section]` | settled 섹션 수정 + 오염 범위 자동 탐지. Discussion audit trail |
+| `/sowhat:sync` | GitHub 변경 감지 → 로컬 반영 |
+| `/sowhat:map [section]` | Mermaid로 논증 트리 시각화 |
+| `/sowhat:progress` | 현재 상태 대시보드 + 논증 부채 추적 + 다음 액션 안내 |
+| `/sowhat:resume` | 세션 재개 (handoff.json → session.md → git log 우선순위) |
 
 ---
 
 ## 커맨드 상세 동작
 
-### `/sowhat:init`
+### `/sowhat:init [--from | --research [--auto]]`
 
+**idea 모드 (기본):**
 ```
 1. 인간: project name + rough idea 입력
 2. Claude: IBIS Issue 프레이밍
-   - "해결하려는 핵심 Issue(문제)는 무엇입니까?"
-   - IBIS 형식: "어떻게 하면 X를 할 수 있는가?"
-3. Situation/Complication/Question 추출을 위한 핑퐁
-   - "이 문제가 해결되지 않으면 어떤 일이 생기는가?"
-   - "지금 이 시점에 이것을 만드는 이유는?"
-   - "성공한다면 무엇이 달라지는가?"
-4. Answer(So What?) 도출 → 인간 확인
-5. Key Arguments 초안 제안 → 인간 수정/확정
-6. 디렉터리 생성: logs/ maps/ research/ planning/
-7. 00-thesis.md 생성
-8. Git repo 초기화
-9. GitHub repo 자동 생성 + remote 연결
-10. GitHub Issues 생성 (thesis = Issue #1)
-11. logs/session-{datetime}.md 생성
-12. /sowhat:settle thesis 대기 상태
+3. SCQ 핑퐁 → Answer(So What?) 도출
+4. Key Arguments 구성
+5. 파일 생성 + Git + GitHub
 ```
 
-Answer 확정 전까지 thesis settled 불가.
-Claude가 Answer의 명확성을 검증 — 모호하면 재핑퐁.
+**content-critique 모드 (`--from`):**
+```
+1. 대상 콘텐츠 Toulmin 분석
+2. 입장 선택 (반박/비평/대안/부분동의)
+3. SCQ 핑퐁 (대상 기반)
+4. 이후 동일
+```
+
+**research 모드 (`--research`):**
+```
+1. 관심 영역 입력
+2. 자료 수집 (URL/파일/폴더/토픽 — 대화형, 혼합 가능)
+3. 자료 분석 + 종합 → research/SYNTHESIS.md
+4. 인간 인사이트 주입 (자료와 충돌 허용)
+5. Thesis 후보 제안 (근거 + 인사이트 결합, 근거 강도 표시)
+6. Key Arguments 자동 매핑 (파인딩 → 논거 클러스터링)
+7. 역 SCQ (Answer → S/C/Q 역도출)
+8. 파일 생성 + Git + GitHub
+```
+
+**research auto 모드 (`--research --auto`):**
+```
+1. [인간] 자료 수집 → "수집 완료"
+2. [자동] 분석 → 종합 → thesis 자동 선택 → autonomous → challenge → draft
+3. critical checkpoint에서만 일시정지
+```
 
 ---
 
@@ -561,6 +630,50 @@ Git commit: "draft: generate {type}"
 
 ---
 
+## 품질 보증 메커니즘
+
+GSD 1.25-1.29에서 차용한 논증 품질 보증 체계.
+
+### Stub Detection (settle, autonomous)
+
+Toulmin 필드가 형식만 채워져 있고 실질 내용이 없는 "논증 stub"을 탐지. settle 시 거부.
+
+| 필드 | Stub 예시 |
+|------|----------|
+| Grounds | "다양한 연구에서 확인됨" (구체적 출처 없음) |
+| Warrant | Claim을 동어반복 |
+| Rebuttal | "반론이 있을 수 있으나 극복 가능" (구체적 반론 없음) |
+
+### Cross-Section Regression Gate (settle)
+
+섹션 settle 시 기존 settled 섹션과의 논증 일관성을 검증. Claim 충돌, Grounds 의존 깨짐, thesis 정합성 확인.
+
+### Verification Debt Tracking (progress)
+
+progress 대시보드에서 미해결 논증 부채를 추적:
+- challenge 미수정 건수
+- stub 의심 필드 건수
+- debate weakened 미보강 건수
+- 출처 미확인 Grounds 건수
+
+### Discussion Audit Trail (expand, debate, revise)
+
+모든 핑퐁·라운드 과정을 `logs/discussion/`에 구조화 로그로 보존. resume 정확도 + revise 시 원래 논의 맥락 참조.
+
+### Decision IDs (expand → settle → challenge)
+
+사용자가 내린 모든 결정에 `D-{section}-{seq}` ID 부여. challenge가 "어떤 결정이 취약점의 원인인가" 추적 가능.
+
+### Advisor Mode (expand)
+
+Claim 선택 시 병렬 research agent를 돌려 판단 근거를 미리 제공. 근거가 부족한 섹션에서 자동 활성화.
+
+### Structured Handoff (session-protocol, resume)
+
+세션 종료 시 `logs/handoff.json` 생성. 미결정 사항, 논증 부채, Decision IDs 등 구조화된 정보로 resume 정확도 향상.
+
+---
+
 ## Git Commit 패턴
 
 | 상황 | 커밋 메시지 |
@@ -607,6 +720,7 @@ Git commit: "draft: generate {type}"
 ```json
 {
   "project": "{project-name}",
+  "mode": "idea | content-critique | research",
   "github": {
     "repo": "{owner}/{repo-name}",
     "token_env": "GITHUB_TOKEN"
@@ -622,13 +736,20 @@ Git commit: "draft: generate {type}"
     "count": 0,
     "unreviewed": 0,
     "last_research": null
+  },
+  "research_sources": [],
+  "features": {
+    "sub_research": "enabled",
+    "sub_research_engine": "agent-browser",
+    "sub_research_fallback": "websearch"
   }
 }
 ```
 
-`layer` 필드로 현재 레이어 추적.
-`/sowhat:finalize-planning` 실행 시 `planning → spec`.
-명세 레이어 커맨드가 기획 레이어에서 실행되는 것을 방지.
+- `mode`: 진입 모드. research 모드에서 expand 시 파인딩 자동 제시 등 동작 분기
+- `research_sources`: research 모드에서 수집한 소스 목록
+- `layer`: 현재 레이어. finalize-planning 시 `planning → spec`
+- `features`: sub-research 엔진 설정
 
 ---
 
@@ -670,51 +791,49 @@ sowhat 내부 구조 (섹션 파일, Issues 등)
 
 ## 전체 워크플로우
 
+### 수동 모드 (idea / content-critique / research)
+
 ```
+[초기화]
+/sowhat:init                          ← idea: 아이디어 → thesis
+/sowhat:init --from <url|file>        ← critique: 콘텐츠 → 입장 → thesis
+/sowhat:init --research               ← research: 자료 수집 → 분석 → thesis (bottom-up)
+    └→ 00-thesis.md + research/SYNTHESIS.md (research 모드)
+
 [기획 레이어]
-/sowhat:init
-    └→ IBIS Issue 프레이밍
-    └→ thesis 핑퐁 → 00-thesis.md 생성
-    └→ Git repo + GitHub repo 자동 생성
-    └→ logs/session-{datetime}.md 생성
-    └→ /sowhat:settle thesis
-
+/sowhat:settle thesis
 /sowhat:expand [section] × N
-    └→ Toulmin 구조 기반 섹션 핑퐁
-    └→ /sowhat:settle [section]  ← Warrant/Qualifier/Rebuttal 검증
+    └→ Toulmin 구조 핑퐁 (Advisor mode, Discussion audit trail, Decision IDs)
+    └→ research 모드: 매핑된 파인딩 Grounds 자동 제시
+    └→ /sowhat:settle [section]  ← Stub detection + Cross-section regression
 
-/sowhat:research [url|topic]          ← 기획/명세 어디서든 사용 가능
-    └→ URL 분석 / 토픽 검색 / 자율 리서치
-    └→ 섹션별 수정/추가 제안
-    └→ 인간이 accept/reject → argument-log.md 기록
+/sowhat:note [text]                   ← 작업 중 아이디어 즉시 메모
+/sowhat:research [url|file|dir|topic] ← 기획/명세 어디서든 사용
+/sowhat:debate [section]              ← 변증법 토론 루프
+/sowhat:steelman                      ← 최강 반대 논증 생성
 
-/sowhat:debate [section]              ← 선택적, 논쟁적 섹션에 사용
-    └→ Git branch 기반 변증법 루프
-    └→ 라운드별 logs/debate/ 기록
-
-/sowhat:map                           ← 선택적, 현재 논증 트리 시각화
-    └→ maps/overview.excalidraw 업데이트
-
-/sowhat:challenge
-    └→ 전체 트리 공격 (Toulmin + Walton scheme 기반)
-    └→ 역전파 or 통과
-
-/sowhat:finalize-planning        ← 게이트
-    └→ challenge 자동 실행
-    └→ 명세 레이어 초안 생성 (Toulmin 필드 포함)
+/sowhat:challenge                     ← 전체 트리 8단계 공격 + Decision ID 추적
+/sowhat:finalize-planning             ← 게이트: 명세 레이어 자동 생성
 
 [명세 레이어]
-/sowhat:spec [section] × 6       ← 고정 섹션
-    └→ /sowhat:settle [section]
-
+/sowhat:spec [section] × 6
 /sowhat:challenge
-    └→ 기획+명세 전체 트리 공격
+/sowhat:finalize                      ← GSD export + draft
 
-/sowhat:finalize
-    └→ challenge 자동 실행
-    └→ export/PROJECT.md + export/REQUIREMENTS.md 생성
-    └→ (선택) /sowhat:draft → export/DOCUMENT.md + PRD.md 생성
-    └→ GSD 인계
+/sowhat:progress                      ← 논증 부채 추적 + 다음 액션 안내
+/sowhat:resume                        ← handoff.json → session.md → git log 복원
+```
+
+### 완전 자동 모드 (research + auto)
+
+```
+/sowhat:init --research --auto [--profile <type>]
+    └→ [인간] 자료 수집 (대화형) → "수집 완료"
+    └→ [자동] 분석 → 종합 → thesis 자동 선택
+    └→ [자동] settle thesis → autonomous (expand → debate → settle)
+    └→ [자동] challenge (이슈 시 자동 revise, 최대 2회)
+    └→ [자동] draft (기본: report, --profile로 변경)
+    └→ ⚠️ critical checkpoint에서만 일시정지
 ```
 
 ---
